@@ -1,0 +1,14 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 2026.04.04-34-g8f0581c
+_src_path: gh:scientific-python/cookie
+backend: hatch
+docs: mkdocs
+email: placeholder
+full_name: Louis Neveu
+license: MIT
+org: neveulouis
+project_name: lab-orchestration
+project_short_description: Workflow-agnostic orchestration engine for laboratory automation,
+    with qPCR as the reference workflow.
+url: https://github.com/neveulouis/lab-orchestration
+vcs: true
