@@ -52,21 +52,6 @@ def tests(session: nox.Session) -> None:
     session.run("pytest", *session.posargs)
 
 
-@nox.session(reuse_venv=True, default=False)
-def docs(session: nox.Session) -> None:
-    """
-    Make or serve the docs. Pass --non-interactive to avoid serving.
-    """
-
-    doc_deps = nox.project.dependency_groups(PROJECT, "docs")
-    session.install("-e.", *doc_deps)
-
-    if session.interactive:
-        session.run("mkdocs", "serve", "--clean", *session.posargs)
-    else:
-        session.run("mkdocs", "build", "--clean", *session.posargs)
-
-
 @nox.session(default=False)
 def build(session: nox.Session) -> None:
     """
