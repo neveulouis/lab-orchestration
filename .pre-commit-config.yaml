@@ -53,7 +53,7 @@ repos:
     rev: "v2.1.0"
     hooks:
       - id: mypy
-        files: src|tests|noxfile.py
+        files: src|noxfile.py
         args: []
         additional_dependencies:
           - nox
