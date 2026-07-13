@@ -5,11 +5,9 @@ code in this repository.
 
 ## Project
 
-`lab-orchestration` is at the planning stage
-(`Development Status :: 1 - Planning`): the tooling and packaging are complete,
-but the only source code so far is a placeholder `Example` class in
-`src/lab_orchestration/example.py`. That placeholder is scaffold, replace it, do
-not build around it. See **Scope** for what the project is.
+`lab-orchestration` lab-orchestration orchestrates laboratory instrument
+workflows. See **Scope**. `src/lab_orchestration/example.py` is scaffold:
+replace it, do not build around it.
 
 ## Scope (locked, the four components)
 
@@ -134,3 +132,23 @@ disagreement.
   should have been two commits.
 - **Do not commit or push.** Stage nothing, write no commit messages. Report
   what changed and stop; the commit is authored by hand.
+- **Division of work.** Louis writes the code that carries design: the
+  orchestration engine's state machine and its public surface, the
+  engine/workflow boundary, and all tests. Claude may write _skeletons_ for
+  these — signatures, type annotations, docstrings stating the contract,
+  `NotImplementedError` bodies — but not implementations. Claude may write
+  plumbing that carries no design decision: CLI wiring, file I/O, the synthetic
+  data generator, and refactors already decided. All of it is reviewed. When
+  unsure which side a piece falls on, ask. Do not assume.
+
+## Project state
+
+`project-state.md` at the repository root (untracked) is the project-management
+layer: phase, next step, carry-forwards, session log. It is not documentation
+and it is not a decision doc.
+
+- **Append to the session log; edit sections in place. Never regenerate the
+  file.** A rewrite silently drops content that was not in the immediate
+  context. This has happened before.
+- Write an entry only if the session moved something.
+- Report the change and stop. Do not commit it.
