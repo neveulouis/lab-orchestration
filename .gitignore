@@ -185,3 +185,6 @@ Thumbs.db
 *~
 *.swp
 .vscode/
+
+# Project-management state (not part of the codebase)
+project-state.md
