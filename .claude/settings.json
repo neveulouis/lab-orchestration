@@ -1,11 +1,7 @@
 {
   "permissions": {
     "defaultMode": "default",
-    "ask": [
-      "Bash(git commit *)",
-      "Bash(git push *)",
-      "Bash(uv add *)",
-      "Bash(uv remove *)"
-    ]
+    "deny": ["Bash(git commit *)", "Bash(git push *)"],
+    "ask": ["Bash(uv add *)", "Bash(uv remove *)"]
   }
 }

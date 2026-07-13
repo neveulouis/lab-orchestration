@@ -132,4 +132,5 @@ disagreement.
 - If a constraint here blocks you or looks wrong, say so — do not override it.
 - **Commits: one logical change each.** If the subject line needs two verbs, it
   should have been two commits.
-- **Do not add a Co-Authored-By trailer to commit messages.**
+- **Do not commit or push.** Stage nothing, write no commit messages. Report
+  what changed and stop; the commit is authored by hand.
