@@ -162,3 +162,7 @@ and it is not a decision doc.
   context. This has happened before.
 - Write an entry only if the session moved something.
 - Report the change and stop. Do not commit it.
+- **Auto-memory is off** (`"autoMemoryEnabled": false` in
+  `.claude/settings.json`). Memory files are authored, not accumulated: this
+  file and `project-state.md` are written deliberately and reviewed. Do not
+  propose re-enabling it.
