@@ -11,7 +11,7 @@ from lab_orchestration.example import Example
         (-1, -2, -3),
     ],
 )
-def test_add(a, b, expected):
+def test_add(a: int, b: int, expected: int) -> None:
 
     ex = Example()
     result = ex.add(a, b)
@@ -26,7 +26,7 @@ def test_add(a, b, expected):
         (-1, -2, 1),
     ],
 )
-def test_subtract(a, b, expected):
+def test_subtract(a: int, b: int, expected: int) -> None:
 
     ex = Example()
     result = ex.subtract(a, b)

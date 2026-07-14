@@ -5,9 +5,9 @@ code in this repository.
 
 ## Project
 
-`lab-orchestration` lab-orchestration orchestrates laboratory instrument
-workflows. See **Scope**. `src/lab_orchestration/example.py` is scaffold:
-replace it, do not build around it.
+`lab-orchestration` orchestrates laboratory instrument workflows. See **Scope**.
+`src/lab_orchestration/example.py` is scaffold: replace it, do not build around
+it.
 
 ## Scope (locked, the four components)
 
@@ -30,8 +30,8 @@ Anything outside these four is out of scope.
 
 ## Commands
 
-`uv` manages the environment; `nox` is the task runner (`noxfile.py` is a
-self-contained uv script).
+uv manages the environment. noxfile.py is a self-contained uv script (PEP 723)
+that carries its own copy of nox. CI invokes it as uvx nox -s pylint
 
 ```bash
 uv sync                                          # install package + dev/test deps into .venv
@@ -39,33 +39,40 @@ uv run pytest                                    # run the test suite
 uv run pytest tests/test_example.py::test_add    # run a single test
 uv run pytest -k subtract                        # run tests matching an expression
 
-nox -s tests                                     # tests in an isolated nox env
-nox -s lint                                      # all pre-commit hooks (via prek)
-nox -s pylint                                    # pylint (installs the package; slower path)
-nox -s build                                     # build sdist + wheel (default=False, name it explicitly)
+uv run noxfile.py -s tests                       # tests in a fresh isolated env (real install of the package)
+uv run noxfile.py -s pylint                      # pylint (installs the package; slower than the pre-commit hook)
+uv run noxfile.py -s build                       # build sdist + wheel (default=False, name it explicitly)
+uv run noxfile.py -s mypy                        # mypy over src + tests in a fresh env (installs the package)
 ```
 
-Linting and formatting run through pre-commit (`prek run --all-files`, or
-`nox -s lint`): ruff (check + format), mypy, codespell, shellcheck, prettier.
-Pylint runs separately because it needs the package installed.
+Linting and formatting run through pre-commit (prek run --all-files): ruff
+(check + format), mypy, codespell, shellcheck, prettier. Pylint runs separately
+because it needs the package installed.
 
 ## Conventions that will bite you
 
 - **Warnings are errors in tests.** `filterwarnings = ["error"]` in
   `pyproject.toml`. Any warning raised during a test fails it.
-- **Strict typing, with one divergence worth knowing.** `[tool.mypy]` is strict
-  and targets both `src` and `tests`. The pre-commit hook, however, runs mypy
-  over `src|noxfile.py` only: the hook runs in an isolated environment that
-  cannot see the editable src-layout package, so type-checking `tests` there
-  fails on import. **The hook is the gate; `uv run mypy` is stricter than the
-  gate.** All new code under `src/lab_orchestration/` must be fully typed.
+- **Strict typing, enforced by two gates.** All code in `src/` and `tests/` must
+  be fully annotated — every parameter and the return. `disallow_untyped_defs`
+  and `disallow_incomplete_defs` are on, so a bare `-> None` is not enough.
+  - **pre-commit hook** — runs on every commit, scoped to `src` and
+    `noxfile.py`.
+  - **nox session** (`uv run noxfile.py -s mypy`) — runs in CI, covers `src` and
+    `tests`.
+
+  The split is not arbitrary: pre-commit runs each hook in an isolated
+  environment that does not have the package installed, so mypy there cannot
+  resolve `import lab_orchestration` and cannot check `tests`. The nox session
+  installs the package (`-e.`), which is why it can. Do not "fix" the hook by
+  widening its `files:` — it will fail on import.
+
 - **Ruff runs a broad ruleset** (bugbear, pyupgrade, pathlib, pytest-style, and
   more). `T20` (no `print`) is ignored only in `tests/**` and `noxfile.py`.
 - Python **>=3.12**. CI tests 3.12 and 3.14.
 - **Autofix is a syntax-and-style opinion, never a semantic one.** When a hook
   rewrites a semantically loaded line (a `parametrize` names string, a regex, a
   format string), re-run the tests before trusting it.
-- CI stays green. A red build is not a later problem.
 
 ## Repository facts
 
@@ -80,14 +87,17 @@ Pylint runs separately because it needs the package installed.
 - Generated from the
   [`scientific-python/cookie`](https://github.com/scientific-python/cookie)
   template. `.copier-answers.yml` is Copier-managed, do not edit it by hand.
-- The Scientific Python Development Guide
-  (learn.scientific-python.org/development/) is the currency reference. When a
-  pattern's currency is in doubt, check it there rather than relying on memory.
+- **Do not write commands or config from memory.** Every command in this file
+  was wrong at least once because it was inferred rather than checked. Before
+  proposing a command, a tool invocation, or a config pattern, verify it against
+  the repo (read the file, run `--help`, run the command) or against the
+  [Scientific Python Development Guide](https://learn.scientific-python.org/development/).
+  A documented command that does not run is worse than no documentation.
 - **The template was trimmed from a library to an application:** no hosted docs,
   no PyPI release workflow, no dependabot. Do not reintroduce library-shaped
-  tooling.
-- `.github/workflows/ci.yml`: a format job (prek + pylint) and a test matrix
-  (Python 3.12 and 3.14 on Ubuntu), gated by an `alls-green` pass job.
+  tooling. -- `.github/workflows/ci.yml`: a quality job (prek, pylint, mypy) and
+  a test matrix (Python 3.12 and 3.14 on Ubuntu), gated by an `alls-green` pass
+  job.
 
 ## Design constraints
 

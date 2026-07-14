@@ -21,17 +21,6 @@ nox.options.default_venv_backend = "uv|virtualenv"
 
 
 @nox.session
-def lint(session: nox.Session) -> None:
-    """
-    Run the linter.
-    """
-    session.install("prek")
-    session.run(
-        "prek", "run", "--all-files", "--show-diff-on-failure", *session.posargs
-    )
-
-
-@nox.session
 def pylint(session: nox.Session) -> None:
     """
     Run Pylint.
@@ -64,6 +53,18 @@ def build(session: nox.Session) -> None:
 
     session.install("build")
     session.run("python", "-m", "build")
+
+
+@nox.session(default=False)
+def mypy(session: nox.Session) -> None:
+    """
+    Run mypy over src and tests.
+    """
+    # Needs the package installed: the pre-commit hook runs in an isolated env
+    # and cannot import lab_orchestration, so it is scoped to src only.
+    test_deps = nox.project.dependency_groups(PROJECT, "test")
+    session.install("-e.", "mypy>=1.11", *test_deps)
+    session.run("mypy")
 
 
 if __name__ == "__main__":
