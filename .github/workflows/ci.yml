@@ -19,7 +19,7 @@ env:
 
 jobs:
   lint:
-    name: Format
+    name: Quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
