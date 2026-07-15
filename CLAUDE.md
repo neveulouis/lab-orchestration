@@ -124,6 +124,19 @@ disagreement.
   (sigmoidal + baseline + noise; knobs: efficiency, starting quantity, Cq). It
   does not model reaction kinetics mechanistically. Document its assumptions.
 - **No hardware.** Everything runs on a laptop against simulated instruments.
+- **The engine does not know about the analysis tail.** It emits a persisted run
+  record and nothing downstream; analysis is a separate consumer that reads that
+  record after the run terminates and operates on nothing else. Engine code must
+  not import, call, or reference analysis. (ADR 0001)
+- **The engine executes against an injected clock; it never reads wall-clock
+  time or sleeps directly.** Workflows declare real durations; the engine runs
+  them against a clock from run configuration, simulated by default (runs finish
+  in seconds). A direct time/sleep call in engine code is a defect. (ADR 0002)
+- **The engine orchestrates against an instrument interface, never a concrete
+  instrument.** Simulated instruments implement it; the synthetic reading
+  generator belongs to the workflow, not the engine. Do not abstract the
+  interface past the "no engine change to simulate" requirement — one
+  implementation exists. (ADR 0003)
 
 ## Working agreement
 
@@ -135,8 +148,9 @@ disagreement.
 - **Do not propose scope.** Suggestions to add a feature, a second workflow, or
   an abstraction "for later" are out of bounds.
 - Architecture decisions, once made, are recorded in the repository's decision
-  docs and distilled into this file. **This file is the standing contract: if
-  the code contradicts it, the code is wrong.**
+  docs and distilled into this file, each distilled constraint citing its source
+  ADR. **This file is the standing contract: if the code contradicts it, the
+  code is wrong.**
 - If a constraint here blocks you or looks wrong, say so — do not override it.
 - **Commits: one logical change each.** If the subject line needs two verbs, it
   should have been two commits.
