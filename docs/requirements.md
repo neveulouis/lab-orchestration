@@ -65,7 +65,6 @@
 
 - The system shall produce a structured, persisted record of what was executed
   during a run. (must)
-- The system shall create a report when a run is finished. (must)
 - The engine shall not know about the data tail. (must)
 
 ### qPCR workflow
@@ -86,6 +85,8 @@
 - The analysis tail shall be a separate consumer that reads the persisted run
   record after the run terminates. (must)
 - The analysis tail shall operate solely on the persisted run record. (must)
+- The system shall produce a report presenting the run and its analysis results.
+  (must)
 - The system shall showcase the data visually using graphs. (should)
 
 ## Non-functional requirements
