@@ -125,13 +125,19 @@ disagreement.
   does not model reaction kinetics mechanistically. Document its assumptions.
 - **No hardware.** Everything runs on a laptop against simulated instruments.
 - **The engine does not know about the analysis tail.** It emits a persisted run
-  record and nothing downstream; analysis is a separate consumer that reads that
-  record after the run terminates and operates on nothing else. Engine code must
-  not import, call, or reference analysis. (ADR 0001)
+  record and nothing downstream; both the analyses and the report are produced
+  by the data tail, which reads that record after the run terminates and
+  operates on nothing else. Engine code must not import, call, or reference
+  analysis, nor build a report. (ADR 0001, ADR 0004)
 - **The engine executes against an injected clock; it never reads wall-clock
   time or sleeps directly.** Workflows declare real durations; the engine runs
   them against a clock from run configuration, simulated by default (runs finish
   in seconds). A direct time/sleep call in engine code is a defect. (ADR 0002)
+- **Run-record timestamps are logical protocol time, not wall-clock time.** They
+  are accumulated from the workflow's declared step durations and are identical
+  under the simulated clock or the wall-clock; the same configuration produces
+  the same timeline. The record does not report real elapsed time, and building
+  a timestamp from a wall-clock read is a defect. (ADR 0005)
 - **The engine orchestrates against an instrument interface, never a concrete
   instrument.** Simulated instruments implement it; the synthetic reading
   generator belongs to the workflow, not the engine. Do not abstract the
