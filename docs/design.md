@@ -7,6 +7,9 @@ seams between it and the layers built on top of it: how a workflow is defined to
 the engine, how the engine executes a run, how instruments and time are supplied
 to it, and what a run produces. It assumes the requirements
 (`docs/requirements.md`) and the accepted decision records (`docs/decisions/`).
+The clock is constructed by the caller and supplied through run configuration;
+the engine receives it as an interface and never selects an implementation, so
+it holds no knowledge of which clocks exist (ADR 0002).
 
 One constraint runs through all of it: the engine is workflow-agnostic, and qPCR
 is the reference workflow defined on top of it. Every seam below exists to keep
@@ -35,9 +38,9 @@ addition on top of this spine and is out of scope for this document.
 - **Workflow definition**, the recipe for a workflow: its instruments, the
   ordered program of steps with their declared durations, and the data model and
   parameters used to simulate it. Authored once and reused across runs.
-- **Run configuration**, the per-invocation inputs: the random seed, the clock
-  mode, and the sample/plate layout. Supplied fresh at each run. One definition
-  can be run many times under different configurations.
+- **Run configuration**, the per-invocation inputs: the random seed, the clock,
+  and the sample/plate layout. Supplied fresh at each run. One definition can be
+  run many times under different configurations.
 - **Run record**, the persisted trace a run produces: what happened, plus the
   inputs that shaped it. The sole input to the data tail.
 
@@ -89,6 +92,17 @@ Two properties of the program are load-bearing:
   acquisition rides on its steps. The absence of a loop never implies the
   absence of data.
 
+**Open: instruments and the per-run seed** Two statements in this document
+cannot both hold. A workflow definition is authored once and reused across runs,
+and an instrument is constructed already carrying its seed, but the seed is run
+configuration, supplied fresh at each run. A definition holding pre-seeded
+instruments is welded to one seed and cannot be reused, which defeats
+reproducibility-by-configuration.
+
+What the definition holds in place of live instruments, and where construction
+happens, is unresolved. It is left open deliberately: the resolution should be
+driven by a running engine, not settled in prose ahead of one.
+
 ## Execution: lifecycle and executor
 
 Two responsibilities are easy to conflate but must stay separate: tracking what
@@ -108,8 +122,11 @@ declared duration, emits a per-step event, and reports each step's outcome to
 the lifecycle machine. Loop re-entry is the executor's own arithmetic. The
 lifecycle machine is never told about it. Within a step the clock advances
 first, then the operation is invoked. A step's operation therefore occurs at the
-end of its own declared duration, and the reading it returns carries that time.
-Each step produces one logical timestamp, shared by its event and its reading.
+end of its own declared duration. The instrument returns a bare reading,
+carrying no time of its own; the executor stamps it with the step's logical
+timestamp when recording it, and emits the step's event under the same
+timestamp. Each step produces one logical timestamp, shared by its event and its
+reading.
 
 Authority runs one way: the executor reports outcomes, and the lifecycle machine
 decides whether the run continues or terminates. Two rules hold:
