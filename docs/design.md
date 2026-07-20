@@ -106,7 +106,10 @@ or stop.
 loop counter, invokes each step's operation, advances the clock over the step's
 declared duration, emits a per-step event, and reports each step's outcome to
 the lifecycle machine. Loop re-entry is the executor's own arithmetic. The
-lifecycle machine is never told about it.
+lifecycle machine is never told about it. Within a step the clock advances
+first, then the operation is invoked. A step's operation therefore occurs at the
+end of its own declared duration, and the reading it returns carries that time.
+Each step produces one logical timestamp, shared by its event and its reading.
 
 Authority runs one way: the executor reports outcomes, and the lifecycle machine
 decides whether the run continues or terminates. Two rules hold:
@@ -206,8 +209,8 @@ the unknowns' readings against that curve to quantify. That fixes the record:
 - **Event history**: the per-step events.
 - **Readings**: each with its logical timestamp and its acquisition label.
 - **Terminal state and reason.**
-- **Sample/plate context**: which wells are standards, which are unknowns, and
-  their known quantities: the inputs the analyses cannot run without.
+- **Run context**: the run configuration's workflow-specific context, stored as
+  an opaque value.
 
 The record deliberately excludes the engine's internal bookkeeping (cursor
 state, loop counters, scheduling detail). It records what happened and the
@@ -216,11 +219,14 @@ engine does not know the data tail, the record does not expose engine mechanics
 for the data tail to depend on. A field with no consumer does not belong in the
 record.
 
-The sample/plate context sits in run configuration rather than the workflow
-definition because it varies from run to run while the workflow stays fixed: the
-same workflow can be run against different layouts. It is recorded because the
-record is the data tail's only source, and it entered as a genuine run input
-rather than something the engine produced.
+The run context sits in run configuration rather than the workflow definition
+because it varies from run to run while the workflow stays fixed. The engine
+stores it and never interprets it, exactly as it treats the workflow name. What
+it contains is the workflow's business. For qPCR it carries the plate layout
+(which wells are standards, which are unknowns, and their known quantities) the
+inputs the analyses cannot run without. A workflow with no such context supplies
+none. The record carries it because the record is the data tail's only source,
+and it entered as a genuine run input rather than something the engine produced.
 
 The workflow name is stored as a plain label. Choosing which analyses to run for
 a given workflow is the data tail's own concern: it reads the name and maps it
