@@ -6,6 +6,8 @@ from dataclasses import dataclass
 
 @dataclass
 class Step:
+    """A unit of work with a declared duration."""
+
     label: str
     duration: int
 
@@ -15,12 +17,16 @@ type Program = Sequence[Step | Repeat]
 
 @dataclass
 class Repeat:
+    """A block of program executed a fixed number of times. Blocks may include repetition (nesting)."""
+
     count: int
     program: Program
 
 
 @dataclass
 class Event:
+    """A step completion output, stamped with logical protocol time."""
+
     label: str
     timestamp: int
 
