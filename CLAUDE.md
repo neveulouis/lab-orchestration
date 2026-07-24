@@ -6,8 +6,6 @@ code in this repository.
 ## Project
 
 `lab-orchestration` orchestrates laboratory instrument workflows. See **Scope**.
-`src/lab_orchestration/example.py` is scaffold: replace it, do not build around
-it.
 
 ## Scope (locked, the four components)
 
@@ -34,15 +32,15 @@ uv manages the environment. noxfile.py is a self-contained uv script (PEP 723)
 that carries its own copy of nox. CI invokes it as uvx nox -s pylint
 
 ```bash
-uv sync                                          # install package + dev/test deps into .venv
-uv run pytest                                    # run the test suite
-uv run pytest tests/test_example.py::test_add    # run a single test
-uv run pytest -k subtract                        # run tests matching an expression
+uv sync                                           # install package + dev/test deps into .venv
+uv run pytest                                     # run the test suite
+uv run pytest tests/test_package.py::test_version # run a single test
+uv run pytest -k timestamp                        # run tests matching an expression
 
-uv run noxfile.py -s tests                       # tests in a fresh isolated env (real install of the package)
-uv run noxfile.py -s pylint                      # pylint (installs the package; slower than the pre-commit hook)
-uv run noxfile.py -s build                       # build sdist + wheel (default=False, name it explicitly)
-uv run noxfile.py -s mypy                        # mypy over src + tests in a fresh env (installs the package)
+uv run noxfile.py -s tests                        # tests in a fresh isolated env (real install of the package)
+uv run noxfile.py -s pylint                       # pylint (installs the package; slower than the pre-commit hook)
+uv run noxfile.py -s build                        # build sdist + wheel (default=False, name it explicitly)
+uv run noxfile.py -s mypy                         # mypy over src + tests in a fresh env (installs the package)
 ```
 
 Linting and formatting run through pre-commit (prek run --all-files): ruff
