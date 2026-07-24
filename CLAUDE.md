@@ -156,7 +156,9 @@ disagreement.
 - **Surface architecture decisions; do not resolve them silently.** When a task
   forks on a design question (a new abstraction, a module boundary, an interface
   shape) stop and state the fork with its options and tradeoffs. Do not pick one
-  and carry on.
+  and carry on. Present the options unranked: do not mark one as recommended,
+  preferred, or obvious, and do not order them so one reads that way. The
+  tradeoffs are the deliverable; the choice is not yours.
 - Inside the established design, proceed without asking.
 - **Do not propose scope.** Suggestions to add a feature, a second workflow, or
   an abstraction "for later" are out of bounds.
