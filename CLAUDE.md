@@ -29,7 +29,8 @@ Anything outside these four is out of scope.
 ## Commands
 
 uv manages the environment. noxfile.py is a self-contained uv script (PEP 723)
-that carries its own copy of nox. CI invokes it as uvx nox -s pylint
+that carries its own copy of nox. CI invokes it as `uvx nox -s <session>` —
+pylint and mypy.
 
 ```bash
 uv sync                                           # install package + dev/test deps into .venv
@@ -43,9 +44,9 @@ uv run noxfile.py -s build                        # build sdist + wheel (default
 uv run noxfile.py -s mypy                         # mypy over src + tests in a fresh env (installs the package)
 ```
 
-Linting and formatting run through pre-commit (prek run --all-files): ruff
-(check + format), mypy, codespell, shellcheck, prettier. Pylint runs separately
-because it needs the package installed.
+Linting and formatting run through the pre-commit hook config (uvx prek run
+--all-files): ruff (check + format), mypy, codespell, shellcheck, prettier.
+Pylint runs separately because it needs the package installed.
 
 ## Conventions that will bite you
 
@@ -81,6 +82,14 @@ because it needs the package installed.
   `.pyi` stub is tracked). `__init__.py` re-exports it as `__version__`, and
   `tests/test_package.py` asserts it matches the installed metadata. **Never
   hand-edit a version.**
+
+  Because `_version.py` is regenerated at install time and lives in `src/`, any
+  nox session that installs the package rewrites it for the project venv too,
+  leaving that venv's metadata stale. `test_version` then fails after any commit
+  or merge until `uv sync --reinstall-package lab-orchestration`. That is
+  environment drift, not a code defect — never edit the test or the version to
+  make it pass.
+
 - **`py.typed`** marks the package as typed (PEP 561).
 - Generated from the
   [`scientific-python/cookie`](https://github.com/scientific-python/cookie)
@@ -93,9 +102,9 @@ because it needs the package installed.
   A documented command that does not run is worse than no documentation.
 - **The template was trimmed from a library to an application:** no hosted docs,
   no PyPI release workflow, no dependabot. Do not reintroduce library-shaped
-  tooling. -- `.github/workflows/ci.yml`: a quality job (prek, pylint, mypy) and
-  a test matrix (Python 3.12 and 3.14 on Ubuntu), gated by an `alls-green` pass
-  job.
+  tooling.
+- `.github/workflows/ci.yml`: a quality job (prek, pylint, mypy) and a test
+  matrix (Python 3.12 and 3.14 on Ubuntu), gated by an `alls-green` pass job.
 
 ## Design constraints
 
