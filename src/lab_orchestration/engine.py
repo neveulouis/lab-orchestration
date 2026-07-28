@@ -2,6 +2,13 @@
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Protocol
+
+
+class Instrument(Protocol):
+    """An instrument the engine can drive: it accepts an operation by name and performs it."""
+
+    def invoke(self, operation: str) -> None: ...
 
 
 @dataclass
