@@ -41,8 +41,8 @@ class Event:
 def run_program(program: Program, instrument: Instrument) -> list[Event]:
     """Walk a program in order, looping over repeats, accumulating logical time.
 
-    Instrument is invoked once at every step completion and emits one event
-    stamped with that time.
+    Instrument is invoked once at every step completion. One event is emitted
+    per step stamped with that time.
     """
 
     elapsed = 0
