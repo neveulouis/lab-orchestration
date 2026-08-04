@@ -35,9 +35,11 @@ addition on top of this spine and is out of scope for this document.
 
 ## Core vocabulary
 
-- **Workflow definition**, the recipe for a workflow: its instruments, the
-  ordered program of steps with their declared durations, and the data model and
-  parameters used to simulate it. Authored once and reused across runs.
+- **Workflow definition**, the recipe for a workflow: the ordered program of
+  steps with their declared durations, and the data model and parameters used to
+  simulate it. Authored once and reused across runs. It names what performs the
+  work but holds nothing that performs it, and holds no per-run value. That is
+  what makes it reusable.
 - **Run configuration**, the per-invocation inputs: the random seed, the clock,
   and the sample/plate layout. Supplied fresh at each run. One definition can be
   run many times under different configurations.
@@ -52,22 +54,26 @@ keeps workflow-specific meaning out of the engine: everything the engine reads
 is generic, and everything qPCR-specific stays on the workflow side, unseen by
 the engine.
 
-The engine reads exactly three things from a workflow:
+The engine reads exactly two things from a workflow:
 
 1. **Identity**, a name. The engine stores it in the run record as an opaque
    label and never interprets it.
-2. **Instruments**, a set of handles, each satisfying the engine's instrument
-   interface. The engine holds them and invokes operations on them without
-   knowing what they are.
-3. **Program**, the ordered thing the engine executes: a sequence of steps, and
+2. **Program**, the ordered thing the engine executes: a sequence of steps, and
    a loop construct that repeats a block of steps a fixed number of times. Each
-   step names an instrument, an operation to invoke on it, a declared duration,
-   and whether it acquires a reading.
+   step names an operation, a declared duration, and whether it acquires a
+   reading.
+
+The instruments a run drives are not read from the definition. They are
+constructed before the run, already carrying their seeds, and supplied at
+invocation; each satisfies the engine's instrument interface, and the engine
+invokes operations on them without knowing what they are. A step's operation
+identifies the instrument that performs it. Where one instrument is enough to
+make that unambiguous, a step names nothing further.
 
 Executing the program means walking it in order: advancing the clock over each
-step's declared duration, invoking the step's operation on its instrument,
-emitting an event as each step runs, and writing any acquired reading into the
-run record.
+step's declared duration, invoking the step's operation on the instrument that
+performs it, emitting an event as each step runs, and writing any acquired
+reading into the run record.
 
 Everything else in the definition stays on the workflow side, and the engine
 never reads it: the data model and its parameters (used by the workflow's
@@ -76,8 +82,8 @@ actually does to its instrument). The seed and clock mode are not in the
 definition at all, they are run configuration.
 
 Validation checks that a submitted definition presents this structure: an
-identity, instruments, and a well-formed program. A definition that does not is
-rejected before any step runs.
+identity and a well-formed program. A definition that does not is rejected
+before any step runs.
 
 Two properties of the program are load-bearing:
 
@@ -92,16 +98,11 @@ Two properties of the program are load-bearing:
   acquisition rides on its steps. The absence of a loop never implies the
   absence of data.
 
-**Open: instruments and the per-run seed** Two statements in this document
-cannot both hold. A workflow definition is authored once and reused across runs,
-and an instrument is constructed already carrying its seed, but the seed is run
-configuration, supplied fresh at each run. A definition holding pre-seeded
-instruments is welded to one seed and cannot be reused, which defeats
-reproducibility-by-configuration.
-
-What the definition holds in place of live instruments, and where construction
-happens, is unresolved. It is left open deliberately: the resolution should be
-driven by a running engine, not settled in prose ahead of one.
+**Resolved: instruments and the per-run seed.** A definition names operations;
+it does not hold the instruments that perform them. Instruments are constructed
+before the run, already carrying their seeds, and supplied at invocation. No
+per-run value is welded into the definition, so one definition runs many times
+under different configurations.
 
 ## Execution: lifecycle and executor
 
@@ -138,8 +139,9 @@ decides whether the run continues or terminates. Two rules hold:
   record emitted as steps run. They occur at the same moment but serve different
   purposes and are not one object.
 
-The executor is built from the workflow definition; the seed and clock come from
-run configuration. Two inputs, two sources.
+The executor walks the program from the workflow definition, drives the clock
+from run configuration, and invokes instruments supplied at invocation. Three
+sources: a definition, a configuration, and the instruments themselves.
 
 ## The instrument interface
 
@@ -148,11 +150,13 @@ There are two interfaces here, for two callers that need different things.
 The **engine-facing interface** is what the executor holds, and it is
 deliberately without vocabulary. The executor is workflow-agnostic and cannot
 distinguish one operation from another. Through this interface it says one
-thing: invoke this operation, for this duration, acquiring a reading if the step
-acquires and return an outcome. The operation is opaque to the executor. It
-invokes one by reference and receives an outcome, without knowing what
-operations exist. The interface is kept no richer than "the engine needs no
-change to run against a simulated instrument" requires (ADR 0003).
+thing: invoke this operation, acquiring a reading if the step acquires and
+return an outcome. Duration is not on this surface: the executor drives the
+clock, so a duration passed to an instrument is a number it can only ignore. The
+operation is opaque to the executor. It invokes one by reference and receives an
+outcome, without knowing what operations exist. The interface is kept no richer
+than "the engine needs no change to run against a simulated instrument" requires
+(ADR 0003).
 
 The **workflow's instrument implementation** sits behind that interface. This is
 where operations are real. Where an abstract operation resolves to actual
