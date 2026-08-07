@@ -171,6 +171,8 @@ disagreement.
   should have been two commits.
 - **Do not commit or push.** Stage nothing, write no commit messages. Report
   what changed and stop; the commit is authored by hand.
+- **Do not report a check as run unless its output is in the reply.** Report
+  each one separately; a single line covering several stands for none of them.
 - **Division of work.** Louis writes the code that carries design: the
   orchestration engine's state machine and its public surface, the
   engine/workflow boundary, and all tests. Claude may write _skeletons_ for
