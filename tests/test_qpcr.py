@@ -61,3 +61,15 @@ def test_readings_increase_with_cycle_number() -> None:
         < thermocycler.readings[CURVE_MIDPOINT_CYCLE]
         < thermocycler.readings[CURVE_MIDPOINT_CYCLE + 5]
     )
+
+
+def test_unrecognised_operation_raises_error() -> None:
+    thermocycler = Thermocycler()
+    with pytest.raises(ValueError, match="acquire"):
+        thermocycler.invoke("acquire")
+
+
+def test_substring_of_recognised_operation_raises_error() -> None:
+    thermocycler = Thermocycler()
+    with pytest.raises(ValueError, match="nat"):
+        thermocycler.invoke("nat")

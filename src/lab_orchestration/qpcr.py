@@ -24,7 +24,9 @@ class Thermocycler:
         self.cycle_number: int = 0
 
     def invoke(self, operation: str) -> None:
-        if operation == "denaturation":
+        if operation in ("initial_denaturation", "annealing"):
+            pass  # recognized but inert operations for this instrument
+        elif operation == "denaturation":
             self.cycle_number = self.cycle_number + 1
         elif operation == "extension":
             self.readings[self.cycle_number] = CURVE_PLATEAU / (
@@ -33,3 +35,6 @@ class Thermocycler:
                     -CURVE_STEEPNESS * (self.cycle_number - CURVE_MIDPOINT_CYCLE)
                 )
             )
+        else:
+            msg = f"unknown operation: {operation!r}"
+            raise ValueError(msg)
