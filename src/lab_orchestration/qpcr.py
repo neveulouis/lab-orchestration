@@ -29,6 +29,9 @@ class Thermocycler:
         elif operation == "denaturation":
             self.cycle_number = self.cycle_number + 1
         elif operation == "extension":
+            if self.cycle_number == 0:
+                msg = "extension invoked before any denaturation. There is no cycle to record a reading against"
+                raise RuntimeError(msg)
             self.readings[self.cycle_number] = CURVE_PLATEAU / (
                 1
                 + math.exp(
