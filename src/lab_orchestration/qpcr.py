@@ -24,12 +24,20 @@ class Thermocycler:
         self.cycle_number: int = 0
 
     def invoke(self, operation: str) -> None:
-        if operation == "denaturation":
+        if operation in ("initial_denaturation", "annealing"):
+            pass  # recognized but inert operations for this instrument
+        elif operation == "denaturation":
             self.cycle_number = self.cycle_number + 1
         elif operation == "extension":
+            if self.cycle_number == 0:
+                msg = "extension invoked before any denaturation. There is no cycle to record a reading against"
+                raise RuntimeError(msg)
             self.readings[self.cycle_number] = CURVE_PLATEAU / (
                 1
                 + math.exp(
                     -CURVE_STEEPNESS * (self.cycle_number - CURVE_MIDPOINT_CYCLE)
                 )
             )
+        else:
+            msg = f"unknown operation: {operation!r}"
+            raise ValueError(msg)

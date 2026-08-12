@@ -28,9 +28,14 @@ from lab_orchestration.qpcr import (
             id="denaturation_only",
         ),
         pytest.param(
-            ["extension", "extension", "extension"],
-            [0],
-            id="extension_only",
+            [
+                "initial_denaturation",
+                "denaturation",
+                "annealing",
+                "extension",
+            ],
+            [1],
+            id="one_full_cycle",
         ),
     ],
 )
@@ -61,3 +66,21 @@ def test_readings_increase_with_cycle_number() -> None:
         < thermocycler.readings[CURVE_MIDPOINT_CYCLE]
         < thermocycler.readings[CURVE_MIDPOINT_CYCLE + 5]
     )
+
+
+def test_unrecognised_operation_raises_error() -> None:
+    thermocycler = Thermocycler()
+    with pytest.raises(ValueError, match="acquire"):
+        thermocycler.invoke("acquire")
+
+
+def test_substring_of_recognised_operation_raises_error() -> None:
+    thermocycler = Thermocycler()
+    with pytest.raises(ValueError, match="nat"):
+        thermocycler.invoke("nat")
+
+
+def test_extension_at_cycle_0_raises_error() -> None:
+    thermocycler = Thermocycler()
+    with pytest.raises(RuntimeError, match="before any denaturation"):
+        thermocycler.invoke("extension")
