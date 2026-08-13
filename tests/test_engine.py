@@ -3,14 +3,17 @@ import pytest
 from lab_orchestration.engine import Event, Program, Repeat, Step, run_program
 
 
-class RecordingInstrument:
-    """A stand-in instrument that remembers what it was asked to perform."""
+class ComputingInstrument:
+    """A stand-in instrument that records what it performed and returns a reading for one operation."""
 
     def __init__(self) -> None:
         self.performed: list[str] = []
 
-    def invoke(self, operation: str) -> None:
+    def invoke(self, operation: str) -> float | None:
         self.performed.append(operation)
+        if operation == "blast":
+            return 42
+        return None
 
 
 program_cases = pytest.mark.parametrize(
@@ -18,7 +21,7 @@ program_cases = pytest.mark.parametrize(
     [
         pytest.param(
             [Step("heat", 10), Step("hold", 20), Step("cool", 40)],
-            [Event("heat", 10), Event("hold", 30), Event("cool", 70)],
+            [Event("heat", 10, None), Event("hold", 30, None), Event("cool", 70, None)],
             id="flat",
         ),
         pytest.param(
@@ -31,16 +34,16 @@ program_cases = pytest.mark.parametrize(
                 Step("stop", 40),
             ],
             [
-                Event("ramp", 10),
-                Event("heat", 40),
-                Event("hold", 55),
-                Event("hold", 70),
-                Event("cool", 75),
-                Event("heat", 105),
-                Event("hold", 120),
-                Event("hold", 135),
-                Event("cool", 140),
-                Event("stop", 180),
+                Event("ramp", 10, None),
+                Event("heat", 40, None),
+                Event("hold", 55, None),
+                Event("hold", 70, None),
+                Event("cool", 75, None),
+                Event("heat", 105, None),
+                Event("hold", 120, None),
+                Event("hold", 135, None),
+                Event("cool", 140, None),
+                Event("stop", 180, None),
             ],
             id="nested_repeats",
         ),
@@ -50,7 +53,7 @@ program_cases = pytest.mark.parametrize(
                 Repeat(0, [Step("heat", 30)]),
                 Step("stop", 40),
             ],
-            [Event("ramp", 10), Event("stop", 50)],
+            [Event("ramp", 10, None), Event("stop", 50, None)],
             id="zero_count",
         ),
     ],
@@ -61,7 +64,7 @@ program_cases = pytest.mark.parametrize(
 def test_event_timestamps_are_cumulative_completion_times(
     program: Program, expected: list[Event]
 ) -> None:
-    events = run_program(program, RecordingInstrument())
+    events = run_program(program, ComputingInstrument())
     assert events == expected
 
 
@@ -69,6 +72,17 @@ def test_event_timestamps_are_cumulative_completion_times(
 def test_each_step_invokes_the_instrument_once_in_program_order(
     program: Program, expected: list[Event]
 ) -> None:
-    recorder = RecordingInstrument()
-    run_program(program, recorder)
-    assert recorder.performed == [event.operation for event in expected]
+    instrument = ComputingInstrument()
+    run_program(program, instrument)
+    assert instrument.performed == [event.operation for event in expected]
+
+
+def test_reading_travels_from_instrument_to_event() -> None:
+    instrument = ComputingInstrument()
+    program: Program = [Step("heat", 10), Step("blast", 10), Step("cool", 10)]
+    events = run_program(program, instrument)
+    assert events == [
+        Event("heat", 10, None),
+        Event("blast", 20, 42),
+        Event("cool", 30, None),
+    ]

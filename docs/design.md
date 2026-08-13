@@ -60,8 +60,7 @@ The engine reads exactly two things from a workflow:
    label and never interprets it.
 2. **Program**, the ordered thing the engine executes: a sequence of steps, and
    a loop construct that repeats a block of steps a fixed number of times. Each
-   step names an operation, a declared duration, and whether it acquires a
-   reading.
+   step names an operation and a declared duration.
 
 The instruments a run drives are not read from the definition. They are
 constructed before the run, already carrying their seeds, and supplied at
@@ -92,10 +91,10 @@ Two properties of the program are load-bearing:
   orchestrator with real control flow rather than a component that forwards a
   single call and waits for a result. What each repeated step _means_ stays in
   the instrument.
-- **Acquisition is a property of a step, independent of the loop.** A step
-  acquires or it does not, whether or not it sits inside a loop. A workflow with
-  no loop is simply the case where a block runs once; it still acquires, because
-  acquisition rides on its steps. The absence of a loop never implies the
+- **Acquisition is a property independent of the loop.** An operation acquires
+  or it does not, whether or not it sits inside a loop. A workflow with no loop
+  is simply the case where a block runs once; it still acquires, because
+  acquisition rides on its operations. The absence of a loop never implies the
   absence of data.
 
 **Resolved: instruments and the per-run seed.** A definition names operations;
@@ -150,13 +149,13 @@ There are two interfaces here, for two callers that need different things.
 The **engine-facing interface** is what the executor holds, and it is
 deliberately without vocabulary. The executor is workflow-agnostic and cannot
 distinguish one operation from another. Through this interface it says one
-thing: invoke this operation, acquiring a reading if the step acquires and
-return an outcome. Duration is not on this surface: the executor drives the
+thing: invoke this operation and return an outcome together with a reading the
+operation produced. Duration is not on this surface: the executor drives the
 clock, so a duration passed to an instrument is a number it can only ignore. The
 operation is opaque to the executor. It invokes one by reference and receives an
-outcome, without knowing what operations exist. The interface is kept no richer
-than "the engine needs no change to run against a simulated instrument" requires
-(ADR 0003).
+outcome, without knowing what operations exist or which of them acquire. The
+interface is kept no richer than "the engine needs no change to run against a
+simulated instrument" requires (ADR 0003).
 
 The **workflow's instrument implementation** sits behind that interface. This is
 where operations are real. Where an abstract operation resolves to actual
@@ -184,12 +183,15 @@ Several rules keep this seam clean:
   asked for; it does not know the program, the order of steps, or the loop
   count. Asked to perform an operation, it performs it and returns. Program
   structure lives only in the executor.
-- **Acquisition is requested by the step and fulfilled by the instrument.**
-  Because a step carries whether it acquires, the invocation carries that
-  request, and the instrument returns a reading when asked. The instrument does
-  not decide when acquisition happens; the program does.
+- **Acquisition is owned by the instrument.** An operation either produces a
+  reading or it does not, and the instrument's implementation decides which. The
+  invocation carries no acquisition request; the engine learns a reading was
+  produced only by receiving one. **Reversal trigger:** an operation that
+  acquires at one point in a program and not at another, or a second instrument
+  answering to the same operation names. Either makes the program the right
+  place to decide, and a step would gain a declared acquisition flag.
 - **A reading returns on the invocation.** An invocation returns an outcome:
-  success or failure, together with a reading when the step acquired. The
+  success or failure, together with a reading when the operation acquired. The
   executor records it. Data flows through one path: one invocation in, one
   outcome out, recorded by the executor. There is no separate channel from
   instrument to record.

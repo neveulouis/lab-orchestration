@@ -20,24 +20,23 @@ class Thermocycler:
     """A simple simulated thermocycler that returns a deterministic fluorescence curve"""
 
     def __init__(self) -> None:
-        self.readings: dict[int, float] = {}
         self.cycle_number: int = 0
 
-    def invoke(self, operation: str) -> None:
+    def invoke(self, operation: str) -> float | None:
         if operation in ("initial_denaturation", "annealing"):
-            pass  # recognized but inert operations for this instrument
-        elif operation == "denaturation":
+            return None  # recognized but inert operations for this instrument
+        if operation == "denaturation":
             self.cycle_number = self.cycle_number + 1
-        elif operation == "extension":
+            return None
+        if operation == "extension":
             if self.cycle_number == 0:
                 msg = "extension invoked before any denaturation. There is no cycle to record a reading against"
                 raise RuntimeError(msg)
-            self.readings[self.cycle_number] = CURVE_PLATEAU / (
+            return CURVE_PLATEAU / (
                 1
                 + math.exp(
                     -CURVE_STEEPNESS * (self.cycle_number - CURVE_MIDPOINT_CYCLE)
                 )
             )
-        else:
-            msg = f"unknown operation: {operation!r}"
-            raise ValueError(msg)
+        msg = f"unknown operation: {operation!r}"
+        raise ValueError(msg)
