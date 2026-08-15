@@ -12,7 +12,7 @@ class ComputingInstrument:
     def invoke(self, operation: str) -> float | None:
         self.performed.append(operation)
         if operation == "blast":
-            return 42
+            return 42.0
         return None
 
 
@@ -83,6 +83,6 @@ def test_reading_travels_from_instrument_to_event() -> None:
     events = run_program(program, instrument)
     assert events == [
         Event("heat", 10, None),
-        Event("blast", 20, 42),
+        Event("blast", 20, 42.0),
         Event("cool", 30, None),
     ]
