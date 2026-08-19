@@ -1,18 +1,31 @@
 import pytest
 
-from lab_orchestration.engine import Event, Program, Repeat, Step, run_program
+from lab_orchestration.engine import (
+    Event,
+    Program,
+    Repeat,
+    Step,
+    StepFailed,
+    run_program,
+)
 
 
 class ComputingInstrument:
-    """A stand-in instrument that records what it performed and returns a reading for one operation."""
+    """A stand-in instrument that records what it performed, returns a reading for one operation anf fails on demand."""
 
     def __init__(self) -> None:
         self.performed: list[str] = []
+        self.count: int = 0
 
     def invoke(self, operation: str) -> float | None:
         self.performed.append(operation)
         if operation == "blast":
             return 42.0
+        if operation == "break":
+            self.count = self.count + 1
+            if self.count == 3:
+                msg = "Instrument broke, too many break cycles"
+                raise RuntimeError(msg)
         return None
 
 
@@ -86,3 +99,12 @@ def test_reading_travels_from_instrument_to_event() -> None:
         Event("blast", 20, 42.0),
         Event("cool", 30, None),
     ]
+
+
+def test_failing_step_keeps_the_events_that_completed() -> None:
+    instrument = ComputingInstrument()
+    program: Program = [Repeat(2, [Repeat(2, [Step("break", 30)])])]
+    with pytest.raises(StepFailed) as excinfo:
+        run_program(program, instrument)
+    assert str(excinfo.value) == "Instrument broke, too many break cycles"
+    assert excinfo.value.events == [Event("break", 30, None), Event("break", 60, None)]
