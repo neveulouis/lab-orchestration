@@ -71,8 +71,7 @@ make that unambiguous, a step names nothing further.
 
 Executing the program means walking it in order: advancing the clock over each
 step's declared duration, invoking the step's operation on the instrument that
-performs it, emitting an event as each step runs, and writing any acquired
-reading into the run record.
+performs it, emitting an event as each step runs.
 
 Everything else in the definition stays on the workflow side, and the engine
 never reads it: the data model and its parameters (used by the workflow's
@@ -125,8 +124,7 @@ first, then the operation is invoked. A step's operation therefore occurs at the
 end of its own declared duration. The instrument returns a bare reading,
 carrying no time of its own; the executor stamps it with the step's logical
 timestamp when recording it, and emits the step's event under the same
-timestamp. Each step produces one logical timestamp, shared by its event and its
-reading.
+timestamp. Each step produces one logical timestamp, stamped on its event.
 
 Authority runs one way: the executor reports outcomes, and the lifecycle machine
 decides whether the run continues or terminates. Two rules hold:
@@ -229,8 +227,8 @@ the unknowns' readings against that curve to quantify. That fixes the record:
 
 - **Run identity**: the workflow name, as an opaque label.
 - **Seed**: from run configuration; small, and required for reproducibility.
-- **Event history**: the per-step events.
-- **Readings**: each with its logical timestamp and its acquisition label.
+- **Event history**: the per-step events holding a reading on the events that
+  produced it.
 - **Terminal state and reason.**
 - **Run context**: the run configuration's workflow-specific context, stored as
   an opaque value.
