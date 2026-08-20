@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from lab_orchestration.engine import run_program
+from lab_orchestration.engine import run_and_report_outcome
 from lab_orchestration.qpcr import QPCR_PROGRAM, Thermocycler
 from lab_orchestration.record import write_record
 
@@ -10,9 +10,9 @@ from lab_orchestration.record import write_record
 def main() -> None:
     instrument = Thermocycler()
     path = Path("run.json")
-    events = run_program(QPCR_PROGRAM, instrument)
-    write_record(events, path)
-    print(f"Run record produced at {path}")  # noqa: T201
+    outcome = run_and_report_outcome(QPCR_PROGRAM, instrument)
+    write_record(outcome, path)
+    print(f"Run {outcome.terminal_state}, record produced at {path}")  # noqa: T201
 
 
 if __name__ == "__main__":

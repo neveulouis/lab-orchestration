@@ -71,7 +71,8 @@ make that unambiguous, a step names nothing further.
 
 Executing the program means walking it in order: advancing the clock over each
 step's declared duration, invoking the step's operation on the instrument that
-performs it, emitting an event as each step runs.
+performs it, emitting an event as each step completes, carrying the reading
+produced by the operation.
 
 Everything else in the definition stays on the workflow side, and the engine
 never reads it: the data model and its parameters (used by the workflow's
@@ -147,13 +148,13 @@ There are two interfaces here, for two callers that need different things.
 The **engine-facing interface** is what the executor holds, and it is
 deliberately without vocabulary. The executor is workflow-agnostic and cannot
 distinguish one operation from another. Through this interface it says one
-thing: invoke this operation and return an outcome together with a reading the
-operation produced. Duration is not on this surface: the executor drives the
-clock, so a duration passed to an instrument is a number it can only ignore. The
-operation is opaque to the executor. It invokes one by reference and receives an
-outcome, without knowing what operations exist or which of them acquire. The
-interface is kept no richer than "the engine needs no change to run against a
-simulated instrument" requires (ADR 0003).
+thing: invoke this operation and return the reading the operation produced, if
+it produced one. Failure is raised not returned. Duration is not on this
+surface: the executor drives the clock, so a duration passed to an instrument is
+a number it can only ignore. The operation is opaque to the executor. It invokes
+one by reference and receives an outcome, without knowing what operations exist
+or which of them acquire. The interface is kept no richer than "the engine needs
+no change to run against a simulated instrument" requires (ADR 0003).
 
 The **workflow's instrument implementation** sits behind that interface. This is
 where operations are real. Where an abstract operation resolves to actual
@@ -188,11 +189,11 @@ Several rules keep this seam clean:
   acquires at one point in a program and not at another, or a second instrument
   answering to the same operation names. Either makes the program the right
   place to decide, and a step would gain a declared acquisition flag.
-- **A reading returns on the invocation.** An invocation returns an outcome:
-  success or failure, together with a reading when the operation acquired. The
-  executor records it. Data flows through one path: one invocation in, one
-  outcome out, recorded by the executor. There is no separate channel from
-  instrument to record.
+- **A reading returns on the invocation.** An invocation returns a reading when
+  the operation acquired. Failure is raised rather than returned. The executor
+  records it. Data flows through one path: one invocation in, one outcome out,
+  recorded by the executor. There is no separate channel from instrument to
+  record.
 
 ## Time
 
@@ -227,8 +228,7 @@ the unknowns' readings against that curve to quantify. That fixes the record:
 
 - **Run identity**: the workflow name, as an opaque label.
 - **Seed**: from run configuration; small, and required for reproducibility.
-- **Event history**: the per-step events holding a reading on the events that
-  produced it.
+- **Event history**: the per-step events carrying the reading its step produced.
 - **Terminal state and reason.**
 - **Run context**: the run configuration's workflow-specific context, stored as
   an opaque value.
