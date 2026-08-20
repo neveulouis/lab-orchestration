@@ -2,7 +2,7 @@
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Literal, Protocol
 
 
 class Instrument(Protocol):
@@ -37,6 +37,15 @@ class Event:
     operation: str
     timestamp: int
     reading: float | None
+
+
+@dataclass
+class Outcome:
+    """A program completion outcome, holding events, terminal state and reason for stopping."""
+
+    events: list[Event]
+    terminal_state: Literal["completed", "failed"]
+    reason: str | None
 
 
 class StepFailed(Exception):
@@ -82,3 +91,20 @@ def run_program(program: Program, instrument: Instrument) -> list[Event]:
                 events.extend(block_events)
 
     return events
+
+
+def run_and_report_outcome(program: Program, instrument: Instrument) -> Outcome:
+    """Run the program and report outcome catching any failure.
+
+    A failed run returns like any other run. StepFailed does not escape. The caller
+    reads terminal_state to tell a completed run from a failed one.
+
+    Both types of failures (RuntimeError, ValueError) were aggregated on failed
+    terminal state, no third one discriminating them. They are both failures.
+    """
+
+    try:
+        events = run_program(program, instrument)
+        return Outcome(events, "completed", None)
+    except StepFailed as exc:
+        return Outcome(exc.events, "failed", str(exc))

@@ -2,20 +2,23 @@ import pytest
 
 from lab_orchestration.engine import (
     Event,
+    Outcome,
     Program,
     Repeat,
     Step,
     StepFailed,
+    run_and_report_outcome,
     run_program,
 )
 
 
 class ComputingInstrument:
-    """A stand-in instrument that records what it performed, returns a reading for one operation anf fails on demand."""
+    """A stand-in instrument that records what it performed, returns a reading for one operation and fails on demand."""
 
-    def __init__(self) -> None:
+    def __init__(self, break_on: int | None = None) -> None:
         self.performed: list[str] = []
         self.count: int = 0
+        self.break_on = break_on
 
     def invoke(self, operation: str) -> float | None:
         self.performed.append(operation)
@@ -23,7 +26,7 @@ class ComputingInstrument:
             return 42.0
         if operation == "break":
             self.count = self.count + 1
-            if self.count == 3:
+            if self.count == self.break_on:
                 msg = "Instrument broke, too many break cycles"
                 raise RuntimeError(msg)
         return None
@@ -102,9 +105,54 @@ def test_reading_travels_from_instrument_to_event() -> None:
 
 
 def test_failing_step_keeps_the_events_that_completed() -> None:
-    instrument = ComputingInstrument()
+    instrument = ComputingInstrument(4)
     program: Program = [Repeat(2, [Repeat(2, [Step("break", 30)])])]
     with pytest.raises(StepFailed) as excinfo:
         run_program(program, instrument)
     assert str(excinfo.value) == "Instrument broke, too many break cycles"
-    assert excinfo.value.events == [Event("break", 30, None), Event("break", 60, None)]
+    assert excinfo.value.events == [
+        Event("break", 30, None),
+        Event("break", 60, None),
+        Event("break", 90, None),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("program", "expected"),
+    [
+        pytest.param(
+            [Step("heat", 10), Repeat(3, [Step("blast", 10)]), Step("cool", 10)],
+            Outcome(
+                [
+                    Event("heat", 10, None),
+                    Event("blast", 20, 42.0),
+                    Event("blast", 30, 42.0),
+                    Event("blast", 40, 42.0),
+                    Event("cool", 50, None),
+                ],
+                "completed",
+                None,
+            ),
+            id="success",
+        ),
+        pytest.param(
+            [Repeat(2, [Repeat(3, [Step("break", 30)])])],
+            Outcome(
+                [
+                    Event("break", 30, None),
+                    Event("break", 60, None),
+                    Event("break", 90, None),
+                    Event("break", 120, None),
+                    Event("break", 150, None),
+                ],
+                "failed",
+                "Instrument broke, too many break cycles",
+            ),
+            id="failure",
+        ),
+    ],
+)
+def test_program_reports_outcome(program: Program, expected: Outcome) -> None:
+    instrument = ComputingInstrument(6)
+    outcome = run_and_report_outcome(program, instrument)
+    assert outcome == expected
