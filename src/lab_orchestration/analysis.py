@@ -1,4 +1,4 @@
-"""Data-analysis tail: reads events and computes cq value"""
+"""Data-analysis tail: reads events and computes Cq."""
 
 from lab_orchestration.engine import Event
 
@@ -17,11 +17,10 @@ def readings(events: list[Event]) -> list[float]:
 
 
 def cq(fluorescence: list[float], threshold: float) -> float | None:
-    """Return the fractional cycle number at which the curve reaches the fluorescence
-    threshold.
+    """Return the fractional cycle number at fluorescence threshold.
 
     Linearly interpolated between the first reading at or above the threshold and
-    the one before. Returns None when the curve never crosses not an error because
+    the one before. Returns None when the curve never crosses. Not an error because
     it signifies no amplification.
 
     Cycles are 1 based, indices are 0-based. The returned value is i + fraction since
@@ -30,7 +29,7 @@ def cq(fluorescence: list[float], threshold: float) -> float | None:
     for i, reading in enumerate(fluorescence[1:], start=1):
         if reading >= threshold:
             fraction = (threshold - fluorescence[i - 1]) / (
-                fluorescence[i] - fluorescence[i - 1]
+                reading - fluorescence[i - 1]
             )
             return i + fraction
     return None
