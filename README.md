@@ -2,11 +2,14 @@
 
 <!-- prettier-ignore-start -->
 [![CI][ci-badge]][ci-link]
+[![Coverage][coverage-badge]][coverage-link]
 [![Python][python-badge]][python-link]
 [![License: MIT][license-badge]][license-link]
 
 [ci-badge]: https://github.com/neveulouis/lab-orchestration/actions/workflows/ci.yml/badge.svg
 [ci-link]: https://github.com/neveulouis/lab-orchestration/actions/workflows/ci.yml
+[coverage-badge]: https://codecov.io/gh/neveulouis/lab-orchestration/graph/badge.svg?token=RU3ETJKZ34
+[coverage-link]: https://codecov.io/gh/neveulouis/lab-orchestration
 [python-badge]: https://img.shields.io/badge/python-3.12%2B-blue
 [python-link]: https://www.python.org/downloads/
 [license-badge]: https://img.shields.io/badge/license-MIT-green
