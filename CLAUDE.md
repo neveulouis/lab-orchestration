@@ -44,9 +44,10 @@ uv run noxfile.py -s build                        # build sdist + wheel (default
 uv run noxfile.py -s mypy                         # mypy over src + tests in a fresh env (installs the package)
 ```
 
-Linting and formatting run through the pre-commit hook config (uvx prek run
---all-files): ruff (check + format), mypy, codespell, shellcheck, prettier.
-Pylint runs separately because it needs the package installed.
+Linting and formatting run through the pre-commit hook config
+(`uvx prek run --all-files`): ruff (check + format), mypy, codespell,
+shellcheck, prettier. Pylint runs separately because it needs the package
+installed.
 
 ## Conventions that will bite you
 
@@ -104,7 +105,8 @@ Pylint runs separately because it needs the package installed.
   no PyPI release workflow, no dependabot. Do not reintroduce library-shaped
   tooling.
 - `.github/workflows/ci.yml`: a quality job (prek, pylint, mypy) and a test
-  matrix (Python 3.12 and 3.14 on Ubuntu), gated by an `alls-green` pass job.
+  matrix (Python 3.12 and 3.14 on Ubuntu, Windows and macOS), gated by an
+  `alls-green` pass job.
 
 ## Design constraints
 
