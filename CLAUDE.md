@@ -172,7 +172,9 @@ disagreement.
 - **Commits: one logical change each.** If the subject line needs two verbs, it
   should have been two commits.
 - **Do not commit or push.** Stage nothing, write no commit messages. Report
-  what changed and stop; the commit is authored by hand.
+  what changed and stop; the commit is authored by hand. A deny rule in
+  `.claude/settings.json` enforces this, but that file is untracked and local to
+  one machine. A fresh clone has the rule as prose only.
 - **Do not report a check as run unless its output is in the reply.** Report
   each one separately; a single line covering several stands for none of them.
 - **Division of work.** Louis writes the code that carries design: the

@@ -120,3 +120,6 @@ project-state.md
 
 # Run-record json
 /run.json
+
+# Claude Code local configuration
+.claude/
