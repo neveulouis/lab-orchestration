@@ -10,7 +10,7 @@
 [ci-link]: https://github.com/neveulouis/lab-orchestration/actions/workflows/ci.yml
 [coverage-badge]: https://codecov.io/gh/neveulouis/lab-orchestration/graph/badge.svg?token=RU3ETJKZ34
 [coverage-link]: https://codecov.io/gh/neveulouis/lab-orchestration
-[python-badge]: https://img.shields.io/badge/python-3.12%2B-blue
+[python-badge]: https://img.shields.io/badge/python-3.12-blue
 [python-link]: https://www.python.org/downloads/
 [license-badge]: https://img.shields.io/badge/license-MIT-green
 [license-link]: LICENSE
@@ -32,7 +32,7 @@ connected to it.
 
 ## Installation
 
-Needs Python 3.12 or later and [uv](https://docs.astral.sh/uv/).
+Needs Python 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync

@@ -69,7 +69,7 @@ installed.
 
 - **Ruff runs a broad ruleset** (bugbear, pyupgrade, pathlib, pytest-style, and
   more). `T20` (no `print`) is ignored only in `tests/**` and `noxfile.py`.
-- Python **>=3.12**. CI tests 3.12 and 3.14.
+- Python **3.12 only**. CI tests 3.12.
 - **Autofix is a syntax-and-style opinion, never a semantic one.** When a hook
   rewrites a semantically loaded line (a `parametrize` names string, a regex, a
   format string), re-run the tests before trusting it.
@@ -105,8 +105,8 @@ installed.
   no PyPI release workflow, no dependabot. Do not reintroduce library-shaped
   tooling.
 - `.github/workflows/ci.yml`: a quality job (prek, pylint, mypy) and a test
-  matrix (Python 3.12 and 3.14 on Ubuntu, Windows and macOS), gated by an
-  `alls-green` pass job.
+  matrix (Python 3.12 on Ubuntu, Windows and macOS), gated by an `alls-green`
+  pass job.
 
 ## Design constraints
 
@@ -125,9 +125,12 @@ disagreement.
   independently shippable first; the Opentrons sample-prep module and the
   data-analysis tail are bolted on afterwards. The engine must depend on
   neither, both depend on the engine.
-- **Opentrons is an optional dependency group, never a core dependency.** It
-  pins `numpy<2` and pulls in a heavy robot stack. The engine and the data tail
-  must install and run without it.
+- **Opentrons is a core dependency. It used to be optional.** It was optional
+  because it forces `numpy` below version 2 and brings a lot of packages with
+  it. That is why Python must be 3.12: numpy 1.26.4 is the last version 1
+  release and it does not run on 3.13. It is core now because an optional
+  dependency is not installed unless someone asks for it by name, and Opentrons
+  is the part a reader is most likely to look for.
 - **Synthetic data only.** No real or proprietary dataset enters this
   repository, ever. The synthetic generator stays a simple parametric curve
   (sigmoidal + baseline + noise; knobs: efficiency, starting quantity, Cq). It
