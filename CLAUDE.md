@@ -135,7 +135,9 @@ disagreement.
   it. That is why Python must be 3.12: numpy 1.26.4 is the last version 1
   release and it does not run on 3.13. It is core now because an optional
   dependency is not installed unless someone asks for it by name, and Opentrons
-  is the part a reader is most likely to look for.
+  is the part a reader is most likely to look for. **Installing everywhere is
+  not importing anywhere:** in `src/`, only the sample-prep module and its
+  wiring may import `opentrons`. (ADR 0008)
 - **Synthetic data only.** No real or proprietary dataset enters this
   repository, ever. The synthetic generator stays a simple parametric curve
   (sigmoidal + baseline + noise; knobs: efficiency, starting quantity, Cq). It
