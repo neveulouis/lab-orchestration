@@ -51,8 +51,13 @@ installed.
 
 ## Conventions that will bite you
 
-- **Warnings are errors in tests.** `filterwarnings = ["error"]` in
-  `pyproject.toml`. Any warning raised during a test fails it.
+- **Warnings are errors in tests, except `ResourceWarning`.**
+  `filterwarnings = ["error", "default::ResourceWarning"]` in `pyproject.toml`;
+  filters apply last to first. The exemption exists because
+  `opentrons_shared_data` opens thirteen JSON files it does not close, and under
+  `["error"]` those surfaced during test setup and the test never ran. It is
+  `default` rather than `ignore` so the thirteen stay visible in the output. Do
+  not remove it without re-running the suite.
 - **Strict typing, enforced by two gates.** All code in `src/` and `tests/` must
   be fully annotated — every parameter and the return. `disallow_untyped_defs`
   and `disallow_incomplete_defs` are on, so a bare `-> None` is not enough.
