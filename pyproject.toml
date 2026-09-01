@@ -57,6 +57,7 @@ addopts = ["-ra", "--showlocals"]
 strict = true
 filterwarnings = [
   "error",
+  "default::ResourceWarning",
 ]
 log_level = "INFO"
 testpaths = [
