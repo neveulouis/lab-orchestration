@@ -33,8 +33,9 @@ class Repeat:
 
 @dataclass
 class Event:
-    """A step completion output, stamped with logical protocol time and data."""
+    """A step completion output, naming the instrument that performed it, stamped with logical protocol time and data."""
 
+    instrument: str
     operation: str
     timestamp: int
     reading: float | None
@@ -61,9 +62,9 @@ def run_program(program: Program, instruments: Mapping[str, Instrument]) -> list
     """Walk a program in order, looping over repeats, accumulating logical time.
 
     The instrument the step names is invoked once at every step completion. One event
-    is emitted per step, stamped with that time and the reading when the operation
-    acquires. A step naming an instrument that was not supplied raises StepFailed
-    before the instrument is invoked.
+    is emitted per step, naming that instrument and stamped with that time and the
+    reading when the operation acquires. A step naming an instrument that was not
+    supplied raises StepFailed before the instrument is invoked.
 
     Events on a raised StepFailed are already in run time.
     """
@@ -78,12 +79,16 @@ def run_program(program: Program, instruments: Mapping[str, Instrument]) -> list
             except KeyError as exc:
                 msg = f"unknown instrument: {item.instrument!r} at operation: {item.operation!r}"
                 raise StepFailed(events, msg) from exc
+
             elapsed = elapsed + item.duration
+
             try:
                 reading = instrument.invoke(item.operation)
             except (ValueError, RuntimeError) as exc:
                 raise StepFailed(events, str(exc)) from exc
-            events.append(Event(item.operation, elapsed, reading))
+
+            events.append(Event(item.instrument, item.operation, elapsed, reading))
+
         elif isinstance(item, Repeat):
             for _ in range(item.count):
                 try:
@@ -93,6 +98,7 @@ def run_program(program: Program, instruments: Mapping[str, Instrument]) -> list
                         event.timestamp = elapsed + event.timestamp
                     events.extend(exc.events)
                     raise StepFailed(events, str(exc)) from exc
+
                 for event in block_events:
                     event.timestamp = elapsed + event.timestamp
                 elapsed = block_events[-1].timestamp

@@ -41,7 +41,11 @@ program_cases = pytest.mark.parametrize(
                 Step("computing_instrument", "hold", 20),
                 Step("computing_instrument", "cool", 40),
             ],
-            [Event("heat", 10, None), Event("hold", 30, None), Event("cool", 70, None)],
+            [
+                Event("computing_instrument", "heat", 10, None),
+                Event("computing_instrument", "hold", 30, None),
+                Event("computing_instrument", "cool", 70, None),
+            ],
             id="flat",
         ),
         pytest.param(
@@ -58,16 +62,16 @@ program_cases = pytest.mark.parametrize(
                 Step("computing_instrument", "stop", 40),
             ],
             [
-                Event("ramp", 10, None),
-                Event("heat", 40, None),
-                Event("hold", 55, None),
-                Event("hold", 70, None),
-                Event("cool", 75, None),
-                Event("heat", 105, None),
-                Event("hold", 120, None),
-                Event("hold", 135, None),
-                Event("cool", 140, None),
-                Event("stop", 180, None),
+                Event("computing_instrument", "ramp", 10, None),
+                Event("computing_instrument", "heat", 40, None),
+                Event("computing_instrument", "hold", 55, None),
+                Event("computing_instrument", "hold", 70, None),
+                Event("computing_instrument", "cool", 75, None),
+                Event("computing_instrument", "heat", 105, None),
+                Event("computing_instrument", "hold", 120, None),
+                Event("computing_instrument", "hold", 135, None),
+                Event("computing_instrument", "cool", 140, None),
+                Event("computing_instrument", "stop", 180, None),
             ],
             id="nested_repeats",
         ),
@@ -77,7 +81,10 @@ program_cases = pytest.mark.parametrize(
                 Repeat(0, [Step("computing_instrument", "heat", 30)]),
                 Step("computing_instrument", "stop", 40),
             ],
-            [Event("ramp", 10, None), Event("stop", 50, None)],
+            [
+                Event("computing_instrument", "ramp", 10, None),
+                Event("computing_instrument", "stop", 50, None),
+            ],
             id="zero_count",
         ),
     ],
@@ -113,9 +120,9 @@ def test_reading_travels_from_instrument_to_event() -> None:
     ]
     events = run_program(program, instruments)
     assert events == [
-        Event("heat", 10, None),
-        Event("blast", 20, 42.0),
-        Event("cool", 30, None),
+        Event("computing_instrument", "heat", 10, None),
+        Event("computing_instrument", "blast", 20, 42.0),
+        Event("computing_instrument", "cool", 30, None),
     ]
 
 
@@ -128,9 +135,9 @@ def test_failing_step_keeps_the_events_that_completed() -> None:
         run_program(program, instruments)
     assert str(excinfo.value) == "Instrument broke, too many break cycles"
     assert excinfo.value.events == [
-        Event("break", 30, None),
-        Event("break", 60, None),
-        Event("break", 90, None),
+        Event("computing_instrument", "break", 30, None),
+        Event("computing_instrument", "break", 60, None),
+        Event("computing_instrument", "break", 90, None),
     ]
 
 
@@ -145,11 +152,11 @@ def test_failing_step_keeps_the_events_that_completed() -> None:
             ],
             Outcome(
                 [
-                    Event("heat", 10, None),
-                    Event("blast", 20, 42.0),
-                    Event("blast", 30, 42.0),
-                    Event("blast", 40, 42.0),
-                    Event("cool", 50, None),
+                    Event("computing_instrument", "heat", 10, None),
+                    Event("computing_instrument", "blast", 20, 42.0),
+                    Event("computing_instrument", "blast", 30, 42.0),
+                    Event("computing_instrument", "blast", 40, 42.0),
+                    Event("computing_instrument", "cool", 50, None),
                 ],
                 "completed",
                 None,
@@ -160,11 +167,11 @@ def test_failing_step_keeps_the_events_that_completed() -> None:
             [Repeat(2, [Repeat(3, [Step("computing_instrument", "break", 30)])])],
             Outcome(
                 [
-                    Event("break", 30, None),
-                    Event("break", 60, None),
-                    Event("break", 90, None),
-                    Event("break", 120, None),
-                    Event("break", 150, None),
+                    Event("computing_instrument", "break", 30, None),
+                    Event("computing_instrument", "break", 60, None),
+                    Event("computing_instrument", "break", 90, None),
+                    Event("computing_instrument", "break", 120, None),
+                    Event("computing_instrument", "break", 150, None),
                 ],
                 "failed",
                 "Instrument broke, too many break cycles",
@@ -190,9 +197,15 @@ def test_each_step_reaches_the_instrument_it_names() -> None:
         Step("instrument_1", "cool", 5),
         Step("instrument_2", "stop", 30),
     ]
-    run_program(program, instruments)
+    events = run_program(program, instruments)
     assert instruments["instrument_1"].performed == ["heat", "cool"]
     assert instruments["instrument_2"].performed == ["hold", "stop"]
+    assert events == [
+        Event("instrument_1", "heat", 10, None),
+        Event("instrument_2", "hold", 30, None),
+        Event("instrument_1", "cool", 35, None),
+        Event("instrument_2", "stop", 65, None),
+    ]
 
 
 def test_unsupplied_instrument_fails_the_run() -> None:
