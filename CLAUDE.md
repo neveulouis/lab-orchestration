@@ -158,10 +158,13 @@ disagreement.
   the same timeline. The record does not report real elapsed time, and building
   a timestamp from a wall-clock read is a defect. (ADR 0005)
 - **The engine orchestrates against an instrument interface, never a concrete
-  instrument.** Simulated instruments implement it; the synthetic reading
+  instrument**. Simulated instruments implement it; the synthetic reading
   generator belongs to the workflow, not the engine. Do not abstract the
   interface past the "no engine change to simulate" requirement — one
   implementation exists. (ADR 0003)
+- **A step names the instrument that performs it** The engine holds a name-to-
+  instrument mapping and dispatches per step. A step naming an instrument that
+  was not supplied fails the run. (ADR 0007)
 
 ## Working agreement
 

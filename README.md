@@ -22,7 +22,7 @@ took place and computes analyses, using qPCR as the reference workflow.
 ## Description
 
 The engine runs a protocol by following steps and repeated sequences. It drives
-the instrument through them and records one event for each completed step. The
+the instruments through them and records one event for each completed step. The
 run is then saved to a JSON file and a stand-alone analysis step reads it again
 in order to produce a Cq value from the recorded fluorescence.
 
@@ -75,9 +75,6 @@ Deferred decisions:
   subtraction.
 - **No command line.** The demo accepts no arguments and writes to only one
   location.
-- **One instrument per run.** A step names an operation, not an instrument.
-  Adding a second instrument would need a mapping from operations to
-  instruments.
 
 ## License
 
