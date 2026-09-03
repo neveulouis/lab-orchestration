@@ -51,8 +51,13 @@ installed.
 
 ## Conventions that will bite you
 
-- **Warnings are errors in tests.** `filterwarnings = ["error"]` in
-  `pyproject.toml`. Any warning raised during a test fails it.
+- **Warnings are errors in tests, except `ResourceWarning`.**
+  `filterwarnings = ["error", "default::ResourceWarning"]` in `pyproject.toml`;
+  filters apply last to first. The exemption exists because
+  `opentrons_shared_data` opens thirteen JSON files it does not close, and under
+  `["error"]` those surfaced during test setup and the test never ran. It is
+  `default` rather than `ignore` so the thirteen stay visible in the output. Do
+  not remove it without re-running the suite.
 - **Strict typing, enforced by two gates.** All code in `src/` and `tests/` must
   be fully annotated — every parameter and the return. `disallow_untyped_defs`
   and `disallow_incomplete_defs` are on, so a bare `-> None` is not enough.
@@ -130,7 +135,9 @@ disagreement.
   it. That is why Python must be 3.12: numpy 1.26.4 is the last version 1
   release and it does not run on 3.13. It is core now because an optional
   dependency is not installed unless someone asks for it by name, and Opentrons
-  is the part a reader is most likely to look for.
+  is the part a reader is most likely to look for. **Installing everywhere is
+  not importing anywhere:** in `src/`, only the sample-prep module and its
+  wiring may import `opentrons`. (ADR 0008)
 - **Synthetic data only.** No real or proprietary dataset enters this
   repository, ever. The synthetic generator stays a simple parametric curve
   (sigmoidal + baseline + noise; knobs: efficiency, starting quantity, Cq). It
@@ -151,10 +158,13 @@ disagreement.
   the same timeline. The record does not report real elapsed time, and building
   a timestamp from a wall-clock read is a defect. (ADR 0005)
 - **The engine orchestrates against an instrument interface, never a concrete
-  instrument.** Simulated instruments implement it; the synthetic reading
+  instrument**. Simulated instruments implement it; the synthetic reading
   generator belongs to the workflow, not the engine. Do not abstract the
   interface past the "no engine change to simulate" requirement — one
   implementation exists. (ADR 0003)
+- **A step names the instrument that performs it** The engine holds a name-to-
+  instrument mapping and dispatches per step. A step naming an instrument that
+  was not supplied fails the run. (ADR 0007)
 
 ## Working agreement
 

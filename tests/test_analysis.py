@@ -51,10 +51,10 @@ CURVE = [
 
 def test_readings_are_returned_filtered_and_in_order() -> None:
     events = [
-        Event("ramp", 10, 1.5),
-        Event("heat", 40, 2.8),
-        Event("hold", 55, None),
-        Event("stop", 65, 3.1),
+        Event("toaster", "ramp", 10, 1.5),
+        Event("toaster", "heat", 40, 2.8),
+        Event("toaster", "hold", 55, None),
+        Event("toaster", "stop", 65, 3.1),
     ]
     assert readings(events) == [1.5, 2.8, 3.1]
 

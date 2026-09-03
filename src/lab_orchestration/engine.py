@@ -1,6 +1,6 @@
 """Workflow-agnostic orchestration engine: executes a program and traces what ran."""
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
@@ -15,6 +15,7 @@ class Instrument(Protocol):
 class Step:
     """A unit of work with a declared operation an instrument performs and a duration."""
 
+    instrument: str
     operation: str
     duration: int
 
@@ -32,8 +33,9 @@ class Repeat:
 
 @dataclass
 class Event:
-    """A step completion output, stamped with logical protocol time and data."""
+    """A step completion output, naming the instrument that performed it, stamped with logical protocol time and data."""
 
+    instrument: str
     operation: str
     timestamp: int
     reading: float | None
@@ -56,11 +58,13 @@ class StepFailed(Exception):
         super().__init__(reason)
 
 
-def run_program(program: Program, instrument: Instrument) -> list[Event]:
+def run_program(program: Program, instruments: Mapping[str, Instrument]) -> list[Event]:
     """Walk a program in order, looping over repeats, accumulating logical time.
 
-    Instrument is invoked once at every step completion. One event is emitted
-    per step, stamped with that time and the reading when the operation acquires.
+    The instrument the step names is invoked once at every step completion. One event
+    is emitted per step, naming that instrument and stamped with that time and the
+    reading when the operation acquires. A step naming an instrument that was not
+    supplied raises StepFailed before the instrument is invoked.
 
     Events on a raised StepFailed are already in run time.
     """
@@ -70,21 +74,31 @@ def run_program(program: Program, instrument: Instrument) -> list[Event]:
 
     for item in program:
         if isinstance(item, Step):
+            try:
+                instrument = instruments[item.instrument]
+            except KeyError as exc:
+                msg = f"unknown instrument: {item.instrument!r} at operation: {item.operation!r}"
+                raise StepFailed(events, msg) from exc
+
             elapsed = elapsed + item.duration
+
             try:
                 reading = instrument.invoke(item.operation)
             except (ValueError, RuntimeError) as exc:
                 raise StepFailed(events, str(exc)) from exc
-            events.append(Event(item.operation, elapsed, reading))
+
+            events.append(Event(item.instrument, item.operation, elapsed, reading))
+
         elif isinstance(item, Repeat):
             for _ in range(item.count):
                 try:
-                    block_events = run_program(item.program, instrument)
+                    block_events = run_program(item.program, instruments)
                 except StepFailed as exc:
                     for event in exc.events:
                         event.timestamp = elapsed + event.timestamp
                     events.extend(exc.events)
                     raise StepFailed(events, str(exc)) from exc
+
                 for event in block_events:
                     event.timestamp = elapsed + event.timestamp
                 elapsed = block_events[-1].timestamp
@@ -93,18 +107,19 @@ def run_program(program: Program, instrument: Instrument) -> list[Event]:
     return events
 
 
-def run_and_report_outcome(program: Program, instrument: Instrument) -> Outcome:
+def run_and_report_outcome(
+    program: Program, instruments: Mapping[str, Instrument]
+) -> Outcome:
     """Run the program and report outcome catching any failure.
 
     A failed run returns like any other run. StepFailed does not escape. The caller
     reads terminal_state to tell a completed run from a failed one.
 
-    Both types of failures (RuntimeError, ValueError) were aggregated on failed
-    terminal state, no third one discriminating them. They are both failures.
+    However a step fails, the run ends the same way.
     """
 
     try:
-        events = run_program(program, instrument)
+        events = run_program(program, instruments)
         return Outcome(events, "completed", None)
     except StepFailed as exc:
         return Outcome(exc.events, "failed", str(exc))

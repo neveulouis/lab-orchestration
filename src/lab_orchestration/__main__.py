@@ -11,9 +11,9 @@ THRESHOLD = 0.1
 
 
 def main() -> None:
-    instrument = Thermocycler()
+    instruments = {"thermocycler": Thermocycler()}
     path = Path("run.json")
-    outcome = run_and_report_outcome(QPCR_PROGRAM, instrument)
+    outcome = run_and_report_outcome(QPCR_PROGRAM, instruments)
     write_record(outcome, path)
     print(f"Run {outcome.terminal_state}, record produced at {path}")  # noqa: T201
     reread = read_record(path)
