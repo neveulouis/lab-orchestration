@@ -158,12 +158,16 @@ disagreement.
 ## Project state
 
 `project-state.md` at the repository root (untracked) is the project-management
-layer: phase, next step, carry-forwards, session log. It is not documentation
-and not a decision doc.
+layer: phase, next step, carry-forwards. It is not documentation and not a
+decision doc.
 
-- **Append to the session log; edit sections in place. Never regenerate the
-  file.** A rewrite silently drops content that was not in the immediate
-  context. This has happened before.
+- **Edit it by targeted replacement. Never rewrite it.** Name the exact passage
+  you are replacing and stop if it does not match. Report the mismatch rather
+  than guessing. Then check the result: list its headers, and count the
+  carry-forward list against the number the header claims. A rewrite silently
+  drops content that was not in the immediate context. This has happened twice,
+  and each time an item vanished with nothing failing.
+- **The same rule holds for every file you hand back, this one included.**
 - Write an entry only if the session moved something.
 - Report the change and stop. Do not commit it.
 - **Auto-memory is off** (`"autoMemoryEnabled": false` in
