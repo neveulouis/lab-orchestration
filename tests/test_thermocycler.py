@@ -1,6 +1,6 @@
 import pytest
 
-from lab_orchestration.qpcr import (
+from lab_orchestration.thermocycler import (
     CURVE_MIDPOINT_CYCLE,
     CURVE_PLATEAU,
     Thermocycler,

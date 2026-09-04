@@ -4,8 +4,9 @@ from pathlib import Path
 
 from lab_orchestration.analysis import cq, readings
 from lab_orchestration.engine import run_and_report_outcome
-from lab_orchestration.qpcr import QPCR_PROGRAM, Thermocycler
+from lab_orchestration.qpcr import QPCR_PROGRAM
 from lab_orchestration.record import read_record, write_record
+from lab_orchestration.thermocycler import Thermocycler
 
 THRESHOLD = 0.1
 
