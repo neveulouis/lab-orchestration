@@ -8,12 +8,13 @@ Accepted — 2026-09-01.
 
 During pre-project, it was decided the opentrons module would be an optional
 dependency group because the library pins `numpy` below version 2 and it was
-thought that it would bring heavy machinery with it. Adding it as extra would
+thought that it would bring heavy machinery with it. Adding it as an extra would
 keep it off the engine and the data tail so the spine-only install would stay
 light and use current numpy.
 
-Only 30 packages were installs with the library, which is not heavy. The numpy
-pin is real on the other hand (1.26.4, last version 1).
+Only 30 packages were install with the library, which is not heavy. The numpy
+pin is real on the other hand1.26.4 is the last version 1 release and it does
+not run on 3.13.
 
 ## Decision
 
