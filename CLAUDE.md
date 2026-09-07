@@ -58,7 +58,8 @@ installed.
   package installed, so mypy there cannot resolve `import lab_orchestration` and
   cannot check `tests`. The nox session installs the package (`-e.`), which is
   why it can. Do not "fix" the hook by widening its `files:`. It will fail on
-  import.
+  import. Anything `src` imports must also appear in the mypy hook's
+  additional_dependencies, matching the pyproject.toml specifier.
 - **Ruff runs a broad ruleset** (bugbear, pyupgrade, pathlib, pytest-style, and
   more). `T20` (no `print`) is ignored only in `tests/**` and `noxfile.py`.
 - **Autofix is a syntax-and-style opinion, never a semantic one.** When a hook
@@ -106,6 +107,10 @@ disagreement.
   `opentrons`. It forces `numpy` below version 2, which is why Python is 3.12
   only: numpy 1.26.4 is the last version 1 release and it does not run on 3.13.
   (ADR 0008)
+- The sample-prep module holds a live ProtocolContext from
+  opentrons.simulate.get_protocol_api, built once in **init**, and targets the
+  Flex. A conventional run(protocol) file is the wrong shape: it is batch, and
+  the engine dispatches per step.
 - **Synthetic data only.** No real or proprietary dataset enters this
   repository, ever. The generator stays a simple parametric curve (sigmoidal +
   baseline + noise; knobs: efficiency, starting quantity, Cq) and does not model

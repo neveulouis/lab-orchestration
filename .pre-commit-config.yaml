@@ -53,6 +53,7 @@ repos:
         additional_dependencies:
           - nox
           - pytest
+          - opentrons>=9.1.1
 
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.4.2"

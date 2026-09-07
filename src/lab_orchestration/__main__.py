@@ -1,17 +1,27 @@
 """Command-line entry point: runs a program and writes the run record."""
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
 from pathlib import Path
 
 from lab_orchestration.analysis import cq, readings
-from lab_orchestration.engine import run_and_report_outcome
-from lab_orchestration.qpcr import QPCR_PROGRAM, Thermocycler
+from lab_orchestration.engine import Instrument, run_and_report_outcome
+from lab_orchestration.qpcr import QPCR_PROGRAM
 from lab_orchestration.record import read_record, write_record
+from lab_orchestration.sample_prep import LiquidHandler
+from lab_orchestration.thermocycler import Thermocycler
 
 THRESHOLD = 0.1
 
 
 def main() -> None:
-    instruments = {"thermocycler": Thermocycler()}
+    instruments: Mapping[str, Instrument] = {
+        "thermocycler": Thermocycler(),
+        "liquid_handler": LiquidHandler(),
+    }
     path = Path("run.json")
     outcome = run_and_report_outcome(QPCR_PROGRAM, instruments)
     write_record(outcome, path)

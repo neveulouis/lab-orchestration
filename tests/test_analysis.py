@@ -4,7 +4,7 @@ from lab_orchestration.analysis import cq, readings
 from lab_orchestration.engine import Event
 
 # The extension readings from a real run.json, produced by the sigmoid
-# in qpcr.py.
+# in thermocycler.py.
 CURVE = [
     7.484622751061123e-05,
     0.00012339457598623172,
