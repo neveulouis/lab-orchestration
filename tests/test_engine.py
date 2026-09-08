@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 import pytest
 
 from lab_orchestration.engine import (
@@ -20,10 +22,10 @@ class ComputingInstrument:
         self.count: int = 0
         self.break_on = break_on
 
-    def invoke(self, operation: str) -> float | None:
+    def invoke(self, operation: str) -> Mapping[str, float] | None:
         self.performed.append(operation)
         if operation == "blast":
-            return 42.0
+            return {"X1": 42.0}
         if operation == "break":
             self.count = self.count + 1
             if self.count == self.break_on:
@@ -121,7 +123,7 @@ def test_reading_travels_from_instrument_to_event() -> None:
     events = run_program(program, instruments)
     assert events == [
         Event("computing_instrument", "heat", 10, None),
-        Event("computing_instrument", "blast", 20, 42.0),
+        Event("computing_instrument", "blast", 20, {"X1": 42.0}),
         Event("computing_instrument", "cool", 30, None),
     ]
 
@@ -153,9 +155,9 @@ def test_failing_step_keeps_the_events_that_completed() -> None:
             Outcome(
                 [
                     Event("computing_instrument", "heat", 10, None),
-                    Event("computing_instrument", "blast", 20, 42.0),
-                    Event("computing_instrument", "blast", 30, 42.0),
-                    Event("computing_instrument", "blast", 40, 42.0),
+                    Event("computing_instrument", "blast", 20, {"X1": 42.0}),
+                    Event("computing_instrument", "blast", 30, {"X1": 42.0}),
+                    Event("computing_instrument", "blast", 40, {"X1": 42.0}),
                     Event("computing_instrument", "cool", 50, None),
                 ],
                 "completed",

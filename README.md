@@ -48,7 +48,10 @@ Output:
 
 ```
 Run completed, record produced at run.json
-Cq: 15.56
+Well  Cq
+A1    15.56
+A2    15.56
+A3    15.56
 ```
 
 The record is written to `run.json` in the working directory.
@@ -66,13 +69,13 @@ The record is written to `run.json` in the working directory.
 
 Deferred decisions:
 
-- **One well only.** A single well is a true reduction of a thermocycler, since
-  the block heats every well at once. It stops being one when a liquid handler
-  enters, which is when wells arrive and with them the standard curve and
-  quantification, which both need multiple wells with known quantities.
+- **No plate layout.** Three wells, all replicates of one sample. Nothing marks
+  a well as a standard or with a known quantity, so the standard curve and
+  quantification, stay out.
 - **A noiseless curve.** The curve is just a simple logistic equation with no
   offset and no noise. Since nothing is there to subtract, there is no baseline
-  subtraction.
+  subtraction. Replicates read identically, which is why the three wells above
+  show the same Cq.
 - **No command line.** The demo accepts no arguments and writes to only one
   location.
 

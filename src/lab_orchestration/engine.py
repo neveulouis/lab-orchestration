@@ -8,7 +8,7 @@ from typing import Literal, Protocol
 class Instrument(Protocol):
     """An instrument the engine can drive: it accepts an operation by name, performs it and returns a reading if the operation acquires."""
 
-    def invoke(self, operation: str) -> float | None: ...
+    def invoke(self, operation: str) -> Mapping[str, float] | None: ...
 
 
 @dataclass
@@ -38,7 +38,7 @@ class Event:
     instrument: str
     operation: str
     timestamp: int
-    reading: float | None
+    reading: Mapping[str, float] | None
 
 
 @dataclass
