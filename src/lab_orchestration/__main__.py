@@ -15,12 +15,13 @@ from lab_orchestration.sample_prep import LiquidHandler
 from lab_orchestration.thermocycler import Thermocycler
 
 THRESHOLD = 0.1
+WELLS = ("A1", "A2", "A3")
 
 
 def main() -> None:
     instruments: Mapping[str, Instrument] = {
-        "thermocycler": Thermocycler(),
-        "liquid_handler": LiquidHandler(),
+        "thermocycler": Thermocycler(WELLS),
+        "liquid_handler": LiquidHandler(WELLS),
     }
     path = Path("run.json")
 

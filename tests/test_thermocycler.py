@@ -42,13 +42,13 @@ from lab_orchestration.thermocycler import (
 def test_readings_return_on_extension(
     operations: list[str], expected: list[bool]
 ) -> None:
-    thermocycler = Thermocycler()
+    thermocycler = Thermocycler(("A1",))
     readings = [thermocycler.invoke(operation) is not None for operation in operations]
     assert readings == expected
 
 
 def test_midpoint_is_half_the_plateau() -> None:
-    thermocycler = Thermocycler()
+    thermocycler = Thermocycler(("A1",))
     for _ in range(CURVE_MIDPOINT_CYCLE):
         thermocycler.invoke("denaturation")
         reading = thermocycler.invoke("extension")
@@ -56,7 +56,7 @@ def test_midpoint_is_half_the_plateau() -> None:
 
 
 def test_readings_increase_with_cycle_number() -> None:
-    thermocycler = Thermocycler()
+    thermocycler = Thermocycler(("A1",))
     readings = []
     midpoint_index = CURVE_MIDPOINT_CYCLE - 1  # cycle n is at index n-1
     for _ in range(CURVE_MIDPOINT_CYCLE + 5):
@@ -72,18 +72,27 @@ def test_readings_increase_with_cycle_number() -> None:
 
 
 def test_unrecognised_operation_raises_error() -> None:
-    thermocycler = Thermocycler()
+    thermocycler = Thermocycler(("A1",))
     with pytest.raises(ValueError, match="acquire"):
         thermocycler.invoke("acquire")
 
 
 def test_substring_of_recognised_operation_raises_error() -> None:
-    thermocycler = Thermocycler()
+    thermocycler = Thermocycler(("A1",))
     with pytest.raises(ValueError, match="nat"):
         thermocycler.invoke("nat")
 
 
 def test_extension_at_cycle_0_raises_error() -> None:
-    thermocycler = Thermocycler()
+    thermocycler = Thermocycler(("A1",))
     with pytest.raises(RuntimeError, match="before any denaturation"):
         thermocycler.invoke("extension")
+
+
+def test_multiple_wells_return_multiple_keys_and_one_value() -> None:
+    thermocycler = Thermocycler(("A1", "A2", "A3"))
+    thermocycler.invoke("denaturation")
+    reading = thermocycler.invoke("extension")
+    assert reading is not None
+    assert len(reading) == 3
+    assert len(set(reading.values())) == 1

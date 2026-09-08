@@ -51,12 +51,12 @@ CURVE = [
 
 def test_readings_are_returned_filtered_and_in_order() -> None:
     events = [
-        Event("toaster", "ramp", 10, {"X1": 1.5}),
-        Event("toaster", "heat", 40, {"X1": 2.8}),
+        Event("toaster", "ramp", 10, {"X1": 1.5, "X2": 0.5}),
+        Event("toaster", "heat", 40, {"X1": 2.8, "X2": 0.8}),
         Event("toaster", "hold", 55, None),
-        Event("toaster", "stop", 65, {"X1": 3.1}),
+        Event("toaster", "stop", 65, {"X1": 3.1, "X2": 1.2}),
     ]
-    assert readings(events) == {"X1": [1.5, 2.8, 3.1]}
+    assert readings(events) == {"X1": [1.5, 2.8, 3.1], "X2": [0.5, 0.8, 1.2]}
 
 
 def test_crossing_returns_expected_cq_value() -> None:
