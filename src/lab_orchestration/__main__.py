@@ -23,16 +23,18 @@ def main() -> None:
         "liquid_handler": LiquidHandler(),
     }
     path = Path("run.json")
+
     outcome = run_and_report_outcome(QPCR_PROGRAM, instruments)
     write_record(outcome, path)
     print(f"Run {outcome.terminal_state}, record produced at {path}")  # noqa: T201
+
     reread = read_record(path)
     if reread.terminal_state == "completed":
-        value = cq(readings(reread.events), THRESHOLD)
-        if value is None:
-            print("No amplification detected")  # noqa: T201
-        else:
-            print(f"Cq: {value:.2f}")  # noqa: T201
+        print(f"{'Well':<6}{'Cq'}")  # noqa: T201
+        for well, curve in readings(reread.events).items():
+            value = cq(curve, THRESHOLD)
+            cell = "—" if value is None else f"{value:.2f}"
+            print(f"{well:<6}{cell}")  # noqa: T201
     else:
         print(reread.reason)  # noqa: T201
 

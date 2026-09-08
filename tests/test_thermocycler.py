@@ -52,7 +52,7 @@ def test_midpoint_is_half_the_plateau() -> None:
     for _ in range(CURVE_MIDPOINT_CYCLE):
         thermocycler.invoke("denaturation")
         reading = thermocycler.invoke("extension")
-    assert reading == CURVE_PLATEAU / 2
+    assert reading == {"A1": CURVE_PLATEAU / 2}
 
 
 def test_readings_increase_with_cycle_number() -> None:
@@ -63,7 +63,7 @@ def test_readings_increase_with_cycle_number() -> None:
         thermocycler.invoke("denaturation")
         data = thermocycler.invoke("extension")
         if data is not None:
-            readings.append(data)
+            readings.append(data["A1"])
     assert (
         readings[midpoint_index - 5]
         < readings[midpoint_index]

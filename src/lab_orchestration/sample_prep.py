@@ -1,6 +1,7 @@
 """Sample preparation instrument."""
 
 import logging
+from collections.abc import Mapping
 from typing import Literal
 
 import opentrons.simulate
@@ -46,7 +47,7 @@ class LiquidHandler:
             # rest of the process.
             vendor_log.setLevel(previous_level)
 
-    def invoke(self, operation: str) -> float | None:
+    def invoke(self, operation: str) -> Mapping[str, float] | None:
 
         if operation == "distribute_master_mix":
             self.pipette.transfer(

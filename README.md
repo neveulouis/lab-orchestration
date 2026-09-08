@@ -47,8 +47,9 @@ uv run -m lab_orchestration
 Output:
 
 ```
-Run completed, record produced at run.json
-Cq: 15.56
+un completed, record produced at run.json
+Well  Cq
+A1    15.56
 ```
 
 The record is written to `run.json` in the working directory.

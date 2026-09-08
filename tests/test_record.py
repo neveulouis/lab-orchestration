@@ -13,7 +13,7 @@ def test_writer_writes_parseable_record(tmp_path: Path) -> None:
         [
             Event("toaster", "ramp", 10, None),
             Event("toaster", "heat", 40, None),
-            Event("toaster", "hold", 55, 6.7),
+            Event("toaster", "hold", 55, {"X1": 6.7}),
             Event("toaster", "stop", 70, None),
         ],
         "completed",
@@ -39,7 +39,7 @@ def test_writer_writes_parseable_record(tmp_path: Path) -> None:
                 "instrument": "toaster",
                 "operation": "hold",
                 "timestamp": 55,
-                "reading": 6.7,
+                "reading": {"X1": 6.7},
             },
             {
                 "instrument": "toaster",
@@ -59,7 +59,7 @@ def test_record_round_trip(tmp_path: Path) -> None:
         [
             Event("toaster", "ramp", 10, None),
             Event("toaster", "heat", 40, None),
-            Event("toaster", "hold", 55, 6.7),
+            Event("toaster", "hold", 55, {"X1": 6.7}),
             Event("toaster", "stop", 70, None),
         ],
         "completed",
