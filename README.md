@@ -26,9 +26,11 @@ the instruments through them and records one event for each completed step. The
 run is then saved to a JSON file and a stand-alone analysis step reads it again
 in order to produce a Cq value from the recorded fluorescence.
 
-The instruments are simulated. There is no actual hardware and the qPCR signal
-is a synthetic curve so the process can take place on a machine with nothing
-connected to it.
+Two instruments are built-in: a thermocycler written from scratch, and a liquid
+handler running through an Opentrons simulation. The engine dispatches to both
+by name so it never imports the vendor library. There is no actual hardware and
+the qPCR signal is a synthetic curve so the process can take place on a machine
+with nothing connected to it.
 
 ## Installation
 
@@ -71,7 +73,9 @@ Deferred decisions:
 
 - **No plate layout.** Three wells, all replicates of one sample. Nothing marks
   a well as a standard or with a known quantity, so the standard curve and
-  quantification, stay out.
+  quantification stay out for now.
+- **No plate handoff.** The liquid handler fills a plate and the thermocycler
+  reads one. Nothing moves it between them yet.
 - **A noiseless curve.** The curve is just a simple logistic equation with no
   offset and no noise. Since nothing is there to subtract, there is no baseline
   subtraction. Replicates read identically, which is why the three wells above

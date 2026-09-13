@@ -108,7 +108,7 @@ disagreement.
   only: numpy 1.26.4 is the last version 1 release and it does not run on 3.13.
   (ADR 0008)
 - The sample-prep module holds a live ProtocolContext from
-  opentrons.simulate.get_protocol_api, built once in **init**, and targets the
+  opentrons.simulate.get_protocol_api, built once in `__init__`, and targets the
   Flex. A conventional run(protocol) file is the wrong shape: it is batch, and
   the engine dispatches per step.
 - **Synthetic data only.** No real or proprietary dataset enters this
