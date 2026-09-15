@@ -7,19 +7,20 @@ Accepted — 2026-07-17.
 ## Context
 
 Workflow steps declare real durations, and the engine executes against an
-injected clock (ADR 0002), simulated by default so a run completes in seconds.
-When the engine timestamps events and readings in the run record, two sources of
-time are available:
+injected clock
+([ADR 0002](0002-the-engine-executes-against-an-injected-clock.md)), simulated
+by default so a run completes in seconds. When the engine timestamps events and
+readings in the run record, two sources of time are available:
 
 1. Logical protocol time — the timeline the workflow declares, accumulated from
    its steps' declared durations.
 2. Real elapsed (wall-clock) time — how long the run actually took to execute.
 
-ADR 0002 noted that a wall-clock changes timestamps, not scientific data, but it
-did not pin what the record's timestamps mean. A naive implementation would
-reach for real timestamps (`now()`), which would make the recorded timeline
-depend on how fast the machine happened to run and would differ between two runs
-of the same configuration.
+[ADR 0002](0002-the-engine-executes-against-an-injected-clock.md) noted that a
+wall-clock changes timestamps, not scientific data, but it did not pin what the
+record's timestamps mean. A naive implementation would reach for real timestamps
+(`now()`), which would make the recorded timeline depend on how fast the machine
+happened to run and would differ between two runs of the same configuration.
 
 ## Decision
 
@@ -38,6 +39,7 @@ simulated clock or the wall-clock.
 - Cost: the record does not report how long a run took in real time. This is
   deliberate — real elapsed time is treated as an artifact of the run
   environment, not as data.
-- A direct wall-clock read in engine code remains a defect (ADR 0002); this
+- A direct wall-clock read in engine code remains a defect
+  ([ADR 0002](0002-the-engine-executes-against-an-injected-clock.md)); this
   decision is about what the recorded timeline means, not about reintroducing
   wall-clock reads.

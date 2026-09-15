@@ -60,12 +60,13 @@ The record is written to `run.json` in the working directory.
 
 ## Documentation
 
-- `docs/design.md` contains the details of the architecture: the engine/workflow
-  seam, the instrument interface, what the run record holds and why.
+- [`docs/design.md`](docs/design.md) contains the details of the architecture:
+  the engine/workflow seam, the instrument interface, what the run record holds
+  and why.
 - `docs/decisions/` summarizes architecture decisions in records with one per
   major choice.
-- `CLAUDE.md` defines the contract this repository hands to the AI coding agent,
-  and also describes how the project was built.
+- [`CLAUDE.md`](CLAUDE.md) defines the contract this repository hands to the AI
+  coding agent, and also describes how the project was built.
 
 ## Scope
 

@@ -7,9 +7,9 @@ Accepted — 2026-08-27.
 ## Context
 
 Until now a run drove only one instrument. This was embedded in the code but not
-a rule. `design.md` states that a step names nothing beyond its operation where
-one instrument is enough to make that unambiguous. The condition stops holding
-when a second instrument enters: the liquid handler.
+a rule. [`design.md`](../design.md) states that a step names nothing beyond its
+operation where one instrument is enough to make that unambiguous. The condition
+stops holding when a second instrument enters: the liquid handler.
 
 Two different ways to run the instruments. Either two runs, one per instrument
 where the sample prep would finish before the thermocycler starts. Or one run
@@ -41,6 +41,7 @@ claim than this project makes about itself.
   but `read_record` passes the file's keys to `Event` as keyword arguments, so
   writer and reader change together.
 - A failed step still emits no event, so a failed run names neither the
-  operation nor the instrument that failed (ADR 0006).
+  operation nor the instrument that failed
+  ([ADR 0006](0006-step-failure-propagates-as-an-exception-carrying-the-completed-events.md)).
 - Engine-side validation gains a second thing to check: that every instrument a
   step names was supplied. Not built here.

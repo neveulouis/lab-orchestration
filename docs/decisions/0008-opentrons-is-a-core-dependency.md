@@ -13,7 +13,7 @@ keep it off the engine and the data tail so the spine-only install would stay
 light and use current numpy.
 
 Only 30 packages were install with the library, which is not heavy. The numpy
-pin is real on the other hand1.26.4 is the last version 1 release and it does
+pin is real on the other hand 1.26.4 is the last version 1 release and it does
 not run on 3.13.
 
 ## Decision
@@ -30,8 +30,8 @@ the Opentrons module is the part a reader is most likely to look for.
   spine-only install skip the pin. That range is gone. Anyone on 3.13 cannot
   install this project at all, including the parts that never touch a robot.
 - The python ceiling comes from a dependency of a dependency. `pyproject.toml`
-  does not say why the upper bound is there, so `CLAUDE.md` does. Re-read the
-  pin at every `opentrons` upgrade.
+  does not say why the upper bound is there, so [`CLAUDE.md`](../../CLAUDE.md)
+  does. Re-read the pin at every `opentrons` upgrade.
 - The engine and the data tail no longer run without `opentrons` installed, but
   they must still run without importing it. Only the sample-prep module and its
   wiring may.

@@ -6,10 +6,11 @@ This document describes the architecture of the orchestration engine and the
 seams between it and the layers built on top of it: how a workflow is defined to
 the engine, how the engine executes a run, how instruments and time are supplied
 to it, and what a run produces. It assumes the requirements
-(`docs/requirements.md`) and the accepted decision records (`docs/decisions/`).
-The clock is constructed by the caller and supplied through run configuration;
-the engine receives it as an interface and never selects an implementation, so
-it holds no knowledge of which clocks exist (ADR 0002).
+([`requirements.md`](requirements.md)) and the accepted decision records
+(`docs/decisions/`). The clock is constructed by the caller and supplied through
+run configuration; the engine receives it as an interface and never selects an
+implementation, so it holds no knowledge of which clocks exist
+([ADR 0002](decisions/0002-the-engine-executes-against-an-injected-clock.md)).
 
 One constraint runs through all of it: the engine is workflow-agnostic, and qPCR
 is the reference workflow defined on top of it. Every seam below exists to keep
@@ -27,11 +28,14 @@ workflow-specific meaning out of the engine.
   engine's interfaces; the engine never looks inside it.
 - **Data tail**, the analysis layer. A separate consumer that reads a finished
   run's record and produces the analyses and the report. Runs after the engine,
-  never during it (ADR 0001).
+  never during it
+  ([ADR 0001](decisions/0001-analysis-is-a-post-hoc-consumer-of-the-run-record.md)).
 
 Instruments belong to the workflow and are driven by the engine through an
-interface (ADR 0003). A sample-prep automation module is a later, optional
-addition on top of this spine and is out of scope for this document.
+interface
+([ADR 0003](decisions/0003-instruments-are-simulated-behind-an-interface.md)). A
+sample-prep automation module is a later, optional addition on top of this spine
+and is out of scope for this document.
 
 ## Core vocabulary
 
@@ -154,7 +158,8 @@ surface: the executor drives the clock, so a duration passed to an instrument is
 a number it can only ignore. The operation is opaque to the executor. It invokes
 one by reference and receives an outcome, without knowing what operations exist
 or which of them acquire. The interface is kept no richer than "the engine needs
-no change to run against a simulated instrument" requires (ADR 0003).
+no change to run against a simulated instrument" requires
+([ADR 0003](decisions/0003-instruments-are-simulated-behind-an-interface.md)).
 
 The **workflow's instrument implementation** sits behind that interface. This is
 where operations are real. Where an abstract operation resolves to actual
@@ -203,8 +208,10 @@ clock does whatever advancing means for it. Under the default simulated clock,
 advancing bumps an internal counter and returns immediately, so a run completes
 in seconds. Under a wall-clock, advancing waits out the real duration and then
 returns. The instruction is the same in both cases, only the real-time cost
-differs (ADR 0002). The engine never reads wall-clock time or sleeps directly.
-Timing enters only through this dependency.
+differs
+([ADR 0002](decisions/0002-the-engine-executes-against-an-injected-clock.md)).
+The engine never reads wall-clock time or sleeps directly. Timing enters only
+through this dependency.
 
 The time written into the run record is logical protocol time: the timeline the
 workflow declares, accumulated from its steps' declared durations. It is the
