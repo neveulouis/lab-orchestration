@@ -106,7 +106,7 @@ disagreement.
   anywhere:** in `src/`, only the sample-prep module and its wiring may import
   `opentrons`. It forces `numpy` below version 2, which is why Python is 3.12
   only: numpy 1.26.4 is the last version 1 release and it does not run on 3.13.
-  (ADR 0008)
+  ([ADR 0008](docs/decisions/0008-opentrons-is-a-core-dependency.md))
 - The sample-prep module holds a live ProtocolContext from
   opentrons.simulate.get_protocol_api, built once in `__init__`, and targets the
   Flex. A conventional run(protocol) file is the wrong shape: it is batch, and
@@ -118,19 +118,23 @@ disagreement.
 - **No hardware.** Everything runs on a laptop against simulated instruments.
 - **The engine does not know about the analysis tail.** It emits a persisted run
   record and nothing downstream. Engine code must not import, call, or reference
-  analysis, nor build a report. (ADR 0001, ADR 0004)
+  analysis, nor build a report.
+  ([ADR 0001](docs/decisions/0001-analysis-is-a-post-hoc-consumer-of-the-run-record.md),
+  [ADR 0004](docs/decisions/0004-the-report-is-produced-by-the-data-tail.md))
 - **The engine executes against an injected clock.** A direct time or sleep call
-  in engine code is a defect. (ADR 0002)
+  in engine code is a defect.
+  ([ADR 0002](docs/decisions/0002-the-engine-executes-against-an-injected-clock.md))
 - **Run-record timestamps are logical protocol time**, accumulated from declared
   step durations. Building a timestamp from a wall-clock read is a defect.
-  (ADR 0005)
+  ([ADR 0005](docs/decisions/0005-the-run-record-stores-logical-protocol-time.md))
 - **The engine orchestrates against an instrument interface, never a concrete
   instrument.** The synthetic reading generator belongs to the workflow. Do not
   abstract the interface past the "no engine change to simulate" requirement.
-  (ADR 0003)
+  ([ADR 0003](docs/decisions/0003-instruments-are-simulated-behind-an-interface.md))
 - **A step names the instrument that performs it.** The engine holds a name-to-
   instrument mapping and dispatches per step. A step naming an instrument that
-  was not supplied fails the run. (ADR 0007)
+  was not supplied fails the run.
+  ([ADR 0007](docs/decisions/0007-a-run-drives-several-instruments-and-each-step-names-its-own.md))
 
 ## Working agreement
 
