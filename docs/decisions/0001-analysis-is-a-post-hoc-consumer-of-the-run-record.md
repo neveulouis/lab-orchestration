@@ -1,8 +1,8 @@
-# 0001 — Analysis is a post-hoc consumer of the run record
+# 0001, Analysis is a post-hoc consumer of the run record
 
 ## Status
 
-Accepted — 2026-07-14.
+Accepted, 2026-07-14.
 
 ## Context
 

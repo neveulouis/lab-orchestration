@@ -1,8 +1,8 @@
-# 0002 — The engine executes against an injected clock
+# 0002, The engine executes against an injected clock
 
 ## Status
 
-Accepted — 2026-07-14.
+Accepted, 2026-07-14.
 
 ## Context
 

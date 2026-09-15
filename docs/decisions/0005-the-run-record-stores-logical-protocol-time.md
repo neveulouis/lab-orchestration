@@ -1,8 +1,8 @@
-# 0005 — The run record stores logical protocol time, not wall-clock time
+# 0005, The run record stores logical protocol time, not wall-clock time
 
 ## Status
 
-Accepted — 2026-07-17.
+Accepted, 2026-07-17.
 
 ## Context
 

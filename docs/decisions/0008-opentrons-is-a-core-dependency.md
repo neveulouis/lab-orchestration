@@ -1,8 +1,8 @@
-# 0008 — Opentrons is a core dependency
+# 0008, Opentrons is a core dependency
 
 ## Status
 
-Accepted — 2026-09-01.
+Accepted, 2026-09-01.
 
 ## Context
 

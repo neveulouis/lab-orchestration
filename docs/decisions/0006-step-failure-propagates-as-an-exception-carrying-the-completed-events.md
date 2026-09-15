@@ -1,8 +1,8 @@
-# 0006 — Step failure propagates as an exception carrying the completed events
+# 0006, Step failure propagates as an exception carrying the completed events
 
 ## Status
 
-Accepted — 2026-08-20.
+Accepted, 2026-08-20.
 
 ## Context
 

@@ -1,4 +1,4 @@
-# Requirements — lab-orchestration
+# Requirements: lab-orchestration
 
 ## Business requirement
 

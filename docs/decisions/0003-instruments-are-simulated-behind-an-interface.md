@@ -1,8 +1,8 @@
-# 0003 — Instruments are simulated behind an interface
+# 0003, Instruments are simulated behind an interface
 
 ## Status
 
-Accepted — 2026-07-14.
+Accepted, 2026-07-14.
 
 ## Context
 

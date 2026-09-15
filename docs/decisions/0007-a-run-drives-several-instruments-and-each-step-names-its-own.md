@@ -1,8 +1,8 @@
-# 0007 — A run drives several instruments and each step names its own
+# 0007, A run drives several instruments and each step names its own
 
 ## Status
 
-Accepted — 2026-08-27.
+Accepted, 2026-08-27.
 
 ## Context
 

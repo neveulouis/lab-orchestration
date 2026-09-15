@@ -1,8 +1,8 @@
-# 0004 — The report is produced by the data tail, not the engine
+# 0004, The report is produced by the data tail, not the engine
 
 ## Status
 
-Accepted — 2026-07-17.
+Accepted, 2026-07-17.
 
 ## Context
 
