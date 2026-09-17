@@ -24,13 +24,14 @@ took place and computes analyses, using qPCR as the reference workflow.
 The engine runs a protocol by following steps and repeated sequences. It drives
 the instruments through them and records one event for each completed step. The
 run is then saved to a JSON file and a stand-alone analysis step reads it again
-in order to produce a Cq value from the recorded fluorescence.
+to produce a Cq value for each well, subtracting a baseline from the recorded
+fluorescence first.
 
 Two instruments are built-in: a thermocycler written from scratch, and a liquid
 handler running through an Opentrons simulation. The engine dispatches to both
 by name so it never imports the vendor library. There is no actual hardware and
-the qPCR signal is a synthetic curve so the process can take place on a machine
-with nothing connected to it.
+the qPCR signal is a synthetic noisy curve so the process can take place on a
+machine with nothing connected to it.
 
 ## Installation
 
@@ -51,9 +52,9 @@ Output:
 ```
 Run completed, record produced at run.json
 Well  Cq
-A1    15.56
-A2    15.56
-A3    15.56
+A1    15.62
+A2    15.39
+A3    15.55
 ```
 
 The record is written to `run.json` in the working directory.
@@ -77,10 +78,6 @@ Deferred decisions:
   quantification stay out for now.
 - **No plate handoff.** The liquid handler fills a plate and the thermocycler
   reads one. Nothing moves it between them yet.
-- **A noiseless curve.** The curve is just a simple logistic equation with no
-  offset and no noise. Since nothing is there to subtract, there is no baseline
-  subtraction. Replicates read identically, which is why the three wells above
-  show the same Cq.
 - **No command line.** The demo accepts no arguments and writes to only one
   location.
 
