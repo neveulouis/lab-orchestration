@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 from pathlib import Path
 
-from lab_orchestration.analysis import cq, readings
+from lab_orchestration.analysis import cq, readings, subtract_baseline
 from lab_orchestration.engine import Instrument, run_and_report_outcome
 from lab_orchestration.qpcr import QPCR_PROGRAM
 from lab_orchestration.record import read_record, write_record
@@ -16,16 +16,17 @@ from lab_orchestration.thermocycler import Thermocycler
 
 THRESHOLD = 0.1
 WELLS = ("A1", "A2", "A3")
+SEED = 42
 
 
 def main() -> None:
     instruments: Mapping[str, Instrument] = {
-        "thermocycler": Thermocycler(WELLS),
+        "thermocycler": Thermocycler(WELLS, SEED),
         "liquid_handler": LiquidHandler(WELLS),
     }
     path = Path("run.json")
 
-    outcome = run_and_report_outcome(QPCR_PROGRAM, instruments)
+    outcome = run_and_report_outcome(QPCR_PROGRAM, instruments, SEED)
     write_record(outcome, path)
     print(f"Run {outcome.terminal_state}, record produced at {path}")  # noqa: T201
 
@@ -33,7 +34,7 @@ def main() -> None:
     if reread.terminal_state == "completed":
         print(f"{'Well':<6}{'Cq'}")  # noqa: T201
         for well, curve in readings(reread.events).items():
-            value = cq(curve, THRESHOLD)
+            value = cq(subtract_baseline(curve, 5), THRESHOLD)
             cell = "—" if value is None else f"{value:.2f}"
             print(f"{well:<6}{cell}")  # noqa: T201
     else:

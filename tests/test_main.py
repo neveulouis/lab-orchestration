@@ -16,8 +16,8 @@ def test_demo_prints_a_row_per_well(
     expected = [
         "Run completed, record produced at run.json",
         "Well  Cq",
-        "A1    15.56",
-        "A2    15.56",
-        "A3    15.56",
+        "A1    15.62",
+        "A2    15.39",
+        "A3    15.55",
     ]
     assert out.splitlines() == expected

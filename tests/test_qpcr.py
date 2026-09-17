@@ -11,10 +11,10 @@ from lab_orchestration.thermocycler import Thermocycler
 
 def test_qpcr_program_runs_to_completion_using_both_instruments() -> None:
     instruments: Mapping[str, Instrument] = {
-        "thermocycler": Thermocycler(("A1", "A2", "A3")),
+        "thermocycler": Thermocycler(("A1", "A2", "A3"), 42),
         "liquid_handler": LiquidHandler(("A1", "A2", "A3")),
     }
-    outcome = run_and_report_outcome(QPCR_PROGRAM, instruments)
+    outcome = run_and_report_outcome(QPCR_PROGRAM, instruments, 42)
     assert outcome.terminal_state == "completed"
     assert outcome.events[-1].reading is not None
     assert len(outcome.events[-1].reading) == 3

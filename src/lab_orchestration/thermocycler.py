@@ -3,17 +3,22 @@
 import math
 from collections.abc import Mapping
 
+import numpy as np
+
 CURVE_PLATEAU = 1
 CURVE_MIDPOINT_CYCLE = 20
 CURVE_STEEPNESS = 0.5
+CURVE_OFFSET = 0.05
+CURVE_NOISE_SD = 0.01
 
 
 class Thermocycler:
-    """A simple simulated thermocycler that returns a deterministic fluorescence curve"""
+    """A simple simulated thermocycler that returns a noisy deterministic fluorescence curve"""
 
-    def __init__(self, wells: tuple[str, ...]) -> None:
+    def __init__(self, wells: tuple[str, ...], seed: int) -> None:
         self.cycle_number: int = 0
         self.wells = wells
+        self.rng = np.random.default_rng(seed)
 
     def invoke(self, operation: str) -> Mapping[str, float] | None:
         if operation in ("initial_denaturation", "annealing"):
@@ -27,13 +32,19 @@ class Thermocycler:
             if self.cycle_number == 0:
                 msg = "extension invoked before any denaturation. There is no cycle to record a reading against"
                 raise RuntimeError(msg)
-            value = CURVE_PLATEAU / (
-                1
-                + math.exp(
-                    -CURVE_STEEPNESS * (self.cycle_number - CURVE_MIDPOINT_CYCLE)
+            signal = CURVE_OFFSET + (
+                CURVE_PLATEAU
+                / (
+                    1
+                    + math.exp(
+                        -CURVE_STEEPNESS * (self.cycle_number - CURVE_MIDPOINT_CYCLE)
+                    )
                 )
             )
-            return dict.fromkeys(self.wells, value)
+            return {
+                well: float(signal + self.rng.normal(0.0, CURVE_NOISE_SD))
+                for well in self.wells
+            }
 
         msg = f"unknown operation: {operation!r}"
         raise ValueError(msg)

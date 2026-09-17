@@ -1,10 +1,9 @@
 import pytest
 
-from lab_orchestration.analysis import cq, readings
+from lab_orchestration.analysis import cq, readings, subtract_baseline
 from lab_orchestration.engine import Event
 
-# The extension readings from a real run.json, produced by the sigmoid
-# in thermocycler.py.
+# A noiseless, offset-free logistic curve.
 CURVE = [
     7.484622751061123e-05,
     0.00012339457598623172,
@@ -69,3 +68,9 @@ def test_crossing_returns_expected_cq_value() -> None:
 def test_no_crossing_returns_none() -> None:
     threshold = 0.99999999
     assert cq(CURVE, threshold) is None
+
+
+def test_baseline_gets_subtracted() -> None:
+    values = [2.0, 4.0, 10.0, 20.0]
+    baseline_cycles = 2
+    assert subtract_baseline(values, baseline_cycles) == [-1.0, 1.0, 7.0, 17.0]
