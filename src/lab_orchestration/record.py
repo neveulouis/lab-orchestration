@@ -11,7 +11,7 @@ def write_record(outcome: Outcome, path: Path) -> None:
     """Write a json run record from the outcome wherever the caller specifies.
 
     Writes a json whose top-level keys are Outcome's field names (events,
-    terminal_state, reason).
+    terminal_state, reason, seed).
 
     Overwrites any record present from previous runs.
     """
@@ -38,4 +38,5 @@ def read_record(path: Path) -> Outcome:
         msg = f"Record at {path} has unknown terminal state: {terminal_state!r}"
         raise ValueError(msg)
     reason = data["reason"]
-    return Outcome(events, terminal_state, reason)
+    seed = data["seed"]
+    return Outcome(events, terminal_state, reason, seed)

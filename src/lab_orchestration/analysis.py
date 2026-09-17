@@ -40,3 +40,13 @@ def cq(fluorescence: list[float], threshold: float) -> float | None:
             )
             return i + fraction
     return None
+
+
+def subtract_baseline(fluorescence: list[float], baseline_cycles: int) -> list[float]:
+    """Return the reading with the background baseline subtracted.
+
+    The baseline is the mean of the first baseline_cycles readings taken at the flat
+    beginning of the curve. It is then subtracted from the readings."""
+
+    baseline = sum(fluorescence[:baseline_cycles]) / baseline_cycles
+    return [reading - baseline for reading in fluorescence]

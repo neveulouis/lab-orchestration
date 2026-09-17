@@ -18,6 +18,7 @@ def test_writer_writes_parseable_record(tmp_path: Path) -> None:
         ],
         "completed",
         None,
+        42,
     )
     write_record(outcome, path)
     record = json.loads(path.read_text(encoding="utf-8"))
@@ -50,6 +51,7 @@ def test_writer_writes_parseable_record(tmp_path: Path) -> None:
         ],
         "terminal_state": "completed",
         "reason": None,
+        "seed": 42,
     }
 
 
@@ -64,6 +66,7 @@ def test_record_round_trip(tmp_path: Path) -> None:
         ],
         "completed",
         None,
+        42,
     )
     write_record(outcome, path)
     restored = read_record(path)

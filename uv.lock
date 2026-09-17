@@ -119,6 +119,7 @@ wheels = [
 name = "lab-orchestration"
 source = { editable = "." }
 dependencies = [
+    { name = "numpy" },
     { name = "opentrons" },
 ]
 
@@ -133,7 +134,10 @@ test = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "opentrons", specifier = ">=9.1.1" }]
+requires-dist = [
+    { name = "numpy", specifier = "<2" },
+    { name = "opentrons", specifier = ">=9.1.1" },
+]
 
 [package.metadata.requires-dev]
 dev = [
