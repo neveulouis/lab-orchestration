@@ -11,7 +11,9 @@ from lab_orchestration.thermocycler import Thermocycler
 
 def test_qpcr_program_runs_to_completion_using_both_instruments() -> None:
     instruments: Mapping[str, Instrument] = {
-        "thermocycler": Thermocycler(("A1", "A2", "A3"), 42),
+        "thermocycler": Thermocycler(
+            ("A1", "A2", "A3"), {"A1": 100.0, "A2": 10.0, "A3": 1.0}, 42
+        ),
         "liquid_handler": LiquidHandler(("A1", "A2", "A3")),
     }
     outcome = run_and_report_outcome(QPCR_PROGRAM, instruments, 42)

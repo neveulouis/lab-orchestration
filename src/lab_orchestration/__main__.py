@@ -16,12 +16,13 @@ from lab_orchestration.thermocycler import Thermocycler
 
 THRESHOLD = 0.1
 WELLS = ("A1", "A2", "A3")
+QUANTITIES = {"A1": 1000.0, "A2": 100.0, "A3": 10.0}
 SEED = 42
 
 
 def main() -> None:
     instruments: Mapping[str, Instrument] = {
-        "thermocycler": Thermocycler(WELLS, SEED),
+        "thermocycler": Thermocycler(WELLS, QUANTITIES, SEED),
         "liquid_handler": LiquidHandler(WELLS),
     }
     path = Path("run.json")

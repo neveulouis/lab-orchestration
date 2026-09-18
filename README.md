@@ -52,9 +52,9 @@ Output:
 ```
 Run completed, record produced at run.json
 Well  Cq
-A1    15.62
-A2    15.39
-A3    15.55
+A1    15.65
+A2    19.04
+A3    22.11
 ```
 
 The record is written to `run.json` in the working directory.
@@ -73,9 +73,9 @@ The record is written to `run.json` in the working directory.
 
 Deferred decisions:
 
-- **No plate layout.** Three wells, all replicates of one sample. Nothing marks
-  a well as a standard or with a known quantity, so the standard curve and
-  quantification stay out for now.
+- **No standard curve.** Wells carry known quantities, but nothing marks a well
+  as a standard or an unknown, and no curve is fitted, so quantification stays
+  out for now.
 - **No plate handoff.** The liquid handler fills a plate and the thermocycler
   reads one. Nothing moves it between them yet.
 - **No command line.** The demo accepts no arguments and writes to only one
