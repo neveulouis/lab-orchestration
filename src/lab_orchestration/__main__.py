@@ -11,23 +11,23 @@ from lab_orchestration.analysis import cq, readings, subtract_baseline
 from lab_orchestration.engine import Instrument, run_and_report_outcome
 from lab_orchestration.qpcr import QPCR_PROGRAM
 from lab_orchestration.record import read_record, write_record
+from lab_orchestration.run_config import RUN_CONTEXT, SEED
 from lab_orchestration.sample_prep import LiquidHandler
 from lab_orchestration.thermocycler import Thermocycler
 
 THRESHOLD = 0.1
-WELLS = ("A1", "A2", "A3")
-QUANTITIES = {"A1": 1000.0, "A2": 100.0, "A3": 10.0}
-SEED = 42
 
 
 def main() -> None:
+    wells = tuple(RUN_CONTEXT)
+    quantities = {well: info["quantity"] for well, info in RUN_CONTEXT.items()}
     instruments: Mapping[str, Instrument] = {
-        "thermocycler": Thermocycler(WELLS, QUANTITIES, SEED),
-        "liquid_handler": LiquidHandler(WELLS),
+        "thermocycler": Thermocycler(wells, quantities, SEED),
+        "liquid_handler": LiquidHandler(wells),
     }
     path = Path("run.json")
 
-    outcome = run_and_report_outcome(QPCR_PROGRAM, instruments, SEED)
+    outcome = run_and_report_outcome(QPCR_PROGRAM, instruments, SEED, RUN_CONTEXT)
     write_record(outcome, path)
     print(f"Run {outcome.terminal_state}, record produced at {path}")  # noqa: T201
 

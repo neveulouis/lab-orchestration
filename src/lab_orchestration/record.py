@@ -11,7 +11,7 @@ def write_record(outcome: Outcome, path: Path) -> None:
     """Write a json run record from the outcome wherever the caller specifies.
 
     Writes a json whose top-level keys are Outcome's field names (events,
-    terminal_state, reason, seed).
+    terminal_state, reason, seed, run_context).
 
     Overwrites any record present from previous runs.
     """
@@ -27,8 +27,7 @@ def read_record(path: Path) -> Outcome:
 
     Reject a malformed run record on terminal state only (ValueError).
 
-    Malformed event or missing key is raised from json or the Event
-    constructor.
+    Anything else malformed raises as-is: JSONDecodeError, KeyError or TypeError.
     """
 
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -39,4 +38,5 @@ def read_record(path: Path) -> Outcome:
         raise ValueError(msg)
     reason = data["reason"]
     seed = data["seed"]
-    return Outcome(events, terminal_state, reason, seed)
+    run_context = data["run_context"]
+    return Outcome(events, terminal_state, reason, seed, run_context)
