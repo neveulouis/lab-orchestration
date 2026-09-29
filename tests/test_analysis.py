@@ -1,6 +1,11 @@
 import pytest
 
-from lab_orchestration.analysis import cq, readings, subtract_baseline
+from lab_orchestration.analysis import (
+    cq,
+    fit_standard_curve,
+    readings,
+    subtract_baseline,
+)
 from lab_orchestration.engine import Event
 
 # A noiseless, offset-free logistic curve.
@@ -74,3 +79,11 @@ def test_baseline_gets_subtracted() -> None:
     values = [2.0, 4.0, 10.0, 20.0]
     baseline_cycles = 2
     assert subtract_baseline(values, baseline_cycles) == [-1.0, 1.0, 7.0, 17.0]
+
+
+def test_fit_recovers_known_line() -> None:
+    standards = [(1000, 20.04), (100, 23.36), (10, 26.68)]
+    curve = fit_standard_curve(standards)
+    assert curve.slope == pytest.approx(-3.32)
+    assert curve.intercept == pytest.approx(30.0)
+    assert curve.r_squared == pytest.approx(1.0)
