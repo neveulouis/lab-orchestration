@@ -1,4 +1,4 @@
-"""Data-analysis tail: reads events, computes Cq and fits standard curve."""
+"""Data-analysis tail: reads events, computes Cq, fits standard curve and quantifies."""
 
 import math
 import statistics
@@ -77,3 +77,12 @@ def fit_standard_curve(standards: list[tuple[float, float]]) -> StandardCurve:
     slope, intercept = statistics.linear_regression(quantities, cqs)
     r_squared = (statistics.correlation(quantities, cqs)) ** 2
     return StandardCurve(slope, intercept, r_squared)
+
+
+def quantify(cq_value: float, curve: StandardCurve) -> float:
+    """Return the quantity the standard curve assigns to a Cq value.
+
+    In the units the standards were declared in. A Cq outside the standards'
+    range extrapolates the line rather than raising."""
+
+    return 10 ** ((cq_value - curve.intercept) / curve.slope)

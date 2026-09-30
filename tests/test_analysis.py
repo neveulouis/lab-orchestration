@@ -1,8 +1,10 @@
 import pytest
 
 from lab_orchestration.analysis import (
+    StandardCurve,
     cq,
     fit_standard_curve,
+    quantify,
     readings,
     subtract_baseline,
 )
@@ -82,8 +84,13 @@ def test_baseline_gets_subtracted() -> None:
 
 
 def test_fit_recovers_known_line() -> None:
-    standards = [(1000, 20.04), (100, 23.36), (10, 26.68)]
+    standards = [(1000.0, 20.04), (100.0, 23.36), (10.0, 26.68)]
     curve = fit_standard_curve(standards)
     assert curve.slope == pytest.approx(-3.32)
     assert curve.intercept == pytest.approx(30.0)
     assert curve.r_squared == pytest.approx(1.0)
+
+
+def test_quantify_returns_correct_value() -> None:
+    curve = StandardCurve(-3.32, 30.0, 1)
+    assert quantify(23.36, curve) == pytest.approx(100)

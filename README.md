@@ -25,7 +25,8 @@ The engine runs a protocol by following steps and repeated sequences. It drives
 the instruments through them and records one event for each completed step. The
 run is then saved to a JSON file and a stand-alone analysis step reads it again
 to produce a Cq value for each well, subtracting a baseline from the recorded
-fluorescence first.
+fluorescence first. It then fits a standard curve over the standards and uses it
+to quantify the unknowns.
 
 Two instruments are built-in: a thermocycler written from scratch, and a liquid
 handler running through an Opentrons simulation. The engine dispatches to both
@@ -51,10 +52,11 @@ Output:
 
 ```
 Run completed, record produced at run.json
-Well  Cq
-A1    15.65
-A2    19.04
-A3    22.11
+Well  Role      Cq     Quantity
+A1    standard  15.91  1000.00
+A2    standard  18.72  100.00
+A3    standard  22.38  10.00
+A4    unknown   17.87  224.53
 ```
 
 The record is written to `run.json` in the working directory.
@@ -73,9 +75,6 @@ The record is written to `run.json` in the working directory.
 
 Deferred decisions:
 
-- **No standard curve.** Wells carry known quantities, but nothing marks a well
-  as a standard or an unknown, and no curve is fitted, so quantification stays
-  out for now.
 - **No plate handoff.** The liquid handler fills a plate and the thermocycler
   reads one. Nothing moves it between them yet.
 - **No command line.** The demo accepts no arguments and writes to only one
