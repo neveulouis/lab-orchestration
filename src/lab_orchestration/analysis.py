@@ -27,6 +27,7 @@ class WellResult:
     role: Literal["standard", "unknown"]
     cq: float | None
     quantity: float | None
+    out_of_range: str | None
 
 
 def readings(events: list[Event]) -> dict[str, list[float]]:
@@ -109,7 +110,8 @@ def analyze_run(
     Fits a standard curve over the standard wells and uses it to quantify the
     unknown wells. Standard wells report the quantity declared in the run
     context, not one recovered from the curve. The dict is in the order
-    readings() yields wells.
+    readings() yields wells. Unknowns outside the standards' Cq range are
+    quantified by extrapolation and flagged, not raised.
 
     Raises ValueError when a standard declares no quantity or never crosses the
     threshold, since no curve can be fit without it.
@@ -135,16 +137,27 @@ def analyze_run(
                 raise ValueError(msg)
             standard_pairs.append((quantity, value))
     standard_curve = fit_standard_curve(standard_pairs)
+    standard_cqs = [cq_value for _, cq_value in standard_pairs]
+    lowest_cq, highest_cq = min(standard_cqs), max(standard_cqs)
 
     results: dict[str, WellResult] = {}
     for well, value in cq_values.items():
         info = context[well]
         role = info["role"]
-        quantity = (
-            info["quantity"]
-            if role == "standard"
-            else (None if value is None else quantify(value, standard_curve))
-        )
-        results[well] = WellResult(role, value, quantity)
+        if role == "standard":
+            quantity = info["quantity"]
+            out_of_range = None
+        elif value is None:
+            quantity = None
+            out_of_range = None
+        else:
+            quantity = quantify(value, standard_curve)
+            if value < lowest_cq:
+                out_of_range = "above"
+            elif value > highest_cq:
+                out_of_range = "below"
+            else:
+                out_of_range = None
+        results[well] = WellResult(role, value, quantity, out_of_range)
 
     return results

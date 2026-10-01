@@ -116,3 +116,32 @@ def test_unusable_standard_raises_naming_the_well(
     )
     with pytest.raises(ValueError, match=message):
         analyze_run(outcome, threshold=0.1, baseline_cycles=1)
+
+
+@pytest.mark.parametrize(
+    ("unknown_reading", "flag"),
+    [
+        (20.0, "above"),
+        (0.5, "below"),
+    ],
+)
+def test_unknown_outside_standards_is_flagged_with_direction(
+    unknown_reading: float, flag: str
+) -> None:
+    # Cq = 1 + 0.1 / second reading
+    outcome = Outcome(
+        events=[
+            Event("toaster", "toast", 0, {"X1": 0.0, "X2": 0.0, "X3": 0.0}),
+            Event("toaster", "toast", 1, {"X1": 1, "X2": 10, "X3": unknown_reading}),
+        ],
+        terminal_state="completed",
+        reason=None,
+        seed=0,
+        run_context={
+            "X1": {"role": "standard", "quantity": 10.0},
+            "X2": {"role": "standard", "quantity": 1000.0},
+            "X3": {"role": "unknown", "quantity": None},
+        },
+    )
+    results = analyze_run(outcome, threshold=0.1, baseline_cycles=1)
+    assert results["X3"].out_of_range == flag

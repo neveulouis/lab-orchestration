@@ -44,6 +44,8 @@ def main() -> None:
         for well, result in results.items():
             cell = "—" if result.cq is None else f"{result.cq:.2f}"
             amount = "—" if result.quantity is None else f"{result.quantity:.2f}"
+            if result.out_of_range is not None:
+                amount = f"{amount} ({result.out_of_range} standard curve range)"
             print(f"{well:<6}{result.role:<10}{cell:<7}{amount}")  # noqa: T201
     else:
         print(reread.reason)  # noqa: T201
