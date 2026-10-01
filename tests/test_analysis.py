@@ -2,13 +2,14 @@ import pytest
 
 from lab_orchestration.analysis import (
     StandardCurve,
+    analyze_run,
     cq,
     fit_standard_curve,
     quantify,
     readings,
     subtract_baseline,
 )
-from lab_orchestration.engine import Event
+from lab_orchestration.engine import Event, Outcome
 
 # A noiseless, offset-free logistic curve.
 CURVE = [
@@ -94,3 +95,24 @@ def test_fit_recovers_known_line() -> None:
 def test_quantify_returns_correct_value() -> None:
     curve = StandardCurve(-3.32, 30.0, 1)
     assert quantify(23.36, curve) == pytest.approx(100)
+
+
+@pytest.mark.parametrize(
+    ("quantity", "message"),
+    [
+        (None, "X1 declares no quantity"),
+        (1000.0, "X1 never crossed the threshold"),
+    ],
+)
+def test_unusable_standard_raises_naming_the_well(
+    quantity: float | None, message: str
+) -> None:
+    outcome = Outcome(
+        events=[Event("toaster", "toast", 10, {"X1": 0.0})],
+        terminal_state="completed",
+        reason=None,
+        seed=0,
+        run_context={"X1": {"role": "standard", "quantity": quantity}},
+    )
+    with pytest.raises(ValueError, match=message):
+        analyze_run(outcome, threshold=0.1, baseline_cycles=1)

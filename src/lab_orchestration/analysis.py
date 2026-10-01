@@ -1,10 +1,14 @@
-"""Data-analysis tail: reads events, computes Cq, fits standard curve and quantifies."""
+"""Data-analysis tail: reads events, computes Cq, fits standard curve and quantifies the unknowns in a completed run."""
 
 import math
 import statistics
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, Literal, cast
 
-from lab_orchestration.engine import Event
+from lab_orchestration.engine import Event, Outcome
+
+if TYPE_CHECKING:
+    from lab_orchestration.run_config import WellInfo
 
 
 @dataclass(frozen=True)
@@ -14,6 +18,15 @@ class StandardCurve:
     slope: float
     intercept: float
     r_squared: float
+
+
+@dataclass(frozen=True)
+class WellResult:
+    """One well's result (cq and quantity) with its role."""
+
+    role: Literal["standard", "unknown"]
+    cq: float | None
+    quantity: float | None
 
 
 def readings(events: list[Event]) -> dict[str, list[float]]:
@@ -86,3 +99,52 @@ def quantify(cq_value: float, curve: StandardCurve) -> float:
     range extrapolates the line rather than raising."""
 
     return 10 ** ((cq_value - curve.intercept) / curve.slope)
+
+
+def analyze_run(
+    outcome: Outcome, threshold: float, baseline_cycles: int
+) -> dict[str, WellResult]:
+    """Return every well's role, Cq and quantity from a completed run's outcome.
+
+    Fits a standard curve over the standard wells and uses it to quantify the
+    unknown wells. Standard wells report the quantity declared in the run
+    context, not one recovered from the curve. The dict is in the order
+    readings() yields wells.
+
+    Raises ValueError when a standard declares no quantity or never crosses the
+    threshold, since no curve can be fit without it.
+    """
+    # pylint cannot see through cast() and reads the run context as object.
+    # pylint: disable=no-member,unsubscriptable-object
+    context = cast("dict[str, WellInfo]", outcome.run_context)
+
+    cq_values: dict[str, float | None] = {}
+    for well, curve in readings(outcome.events).items():
+        cq_values[well] = cq(subtract_baseline(curve, baseline_cycles), threshold)
+
+    standard_pairs: list[tuple[float, float]] = []
+    for well, info in context.items():
+        if info["role"] == "standard":
+            quantity = info["quantity"]
+            value = cq_values[well]
+            if quantity is None:
+                msg = f"Standard {well} declares no quantity"
+                raise ValueError(msg)
+            if value is None:
+                msg = f"Standard {well} never crossed the threshold"
+                raise ValueError(msg)
+            standard_pairs.append((quantity, value))
+    standard_curve = fit_standard_curve(standard_pairs)
+
+    results: dict[str, WellResult] = {}
+    for well, value in cq_values.items():
+        info = context[well]
+        role = info["role"]
+        quantity = (
+            info["quantity"]
+            if role == "standard"
+            else (None if value is None else quantify(value, standard_curve))
+        )
+        results[well] = WellResult(role, value, quantity)
+
+    return results
