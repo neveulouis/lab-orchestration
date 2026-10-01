@@ -22,7 +22,7 @@ class StandardCurve:
 
 @dataclass(frozen=True)
 class WellResult:
-    """One well's result (cq and quantity) with its role."""
+    """One well's result (cq and quantity) with its role and an out of range flag."""
 
     role: Literal["standard", "unknown"]
     cq: float | None
