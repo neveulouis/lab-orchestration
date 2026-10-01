@@ -123,10 +123,11 @@ def test_unusable_standard_raises_naming_the_well(
     [
         (20.0, "above"),
         (0.5, "below"),
+        (0.05, None),
     ],
 )
 def test_unknown_outside_standards_is_flagged_with_direction(
-    unknown_reading: float, flag: str
+    unknown_reading: float, flag: str | None
 ) -> None:
     # Cq = 1 + 0.1 / second reading
     outcome = Outcome(

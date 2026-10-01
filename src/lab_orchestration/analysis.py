@@ -27,7 +27,7 @@ class WellResult:
     role: Literal["standard", "unknown"]
     cq: float | None
     quantity: float | None
-    out_of_range: str | None
+    out_of_range: Literal["above", "below"] | None
 
 
 def readings(events: list[Event]) -> dict[str, list[float]]:
@@ -141,6 +141,7 @@ def analyze_run(
     lowest_cq, highest_cq = min(standard_cqs), max(standard_cqs)
 
     results: dict[str, WellResult] = {}
+    out_of_range: Literal["above", "below"] | None
     for well, value in cq_values.items():
         info = context[well]
         role = info["role"]
