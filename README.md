@@ -26,9 +26,10 @@ the instruments through them and records one event for each completed step. The
 run is then saved to a JSON file and a stand-alone analysis step reads it again
 to produce a Cq value for each well, subtracting a baseline from the recorded
 fluorescence first. It then fits a standard curve over the standards and uses it
-to quantify the unknowns.
+to quantify the unknowns flagging any whose Cq falls outside the standards'
+range.
 
-Two instruments are built-in: a thermocycler written from scratch, and a liquid
+Two instruments are built in: a thermocycler written from scratch, and a liquid
 handler running through an Opentrons simulation. The engine dispatches to both
 by name so it never imports the vendor library. There is no actual hardware and
 the qPCR signal is a synthetic noisy curve so the process can take place on a
@@ -79,6 +80,8 @@ Deferred decisions:
   reads one. Nothing moves it between them yet.
 - **No command line.** The demo accepts no arguments and writes to only one
   location.
+- **No controls or replicates**. Each standard and the unknown is a single well,
+  and there is no no-template control.
 
 ## License
 
