@@ -3,7 +3,6 @@ import statistics
 import pytest
 
 from lab_orchestration.thermocycler import (
-    CURVE_MIDPOINT_CYCLE,
     CURVE_NOISE_SD,
     CURVE_OFFSET,
     CURVE_PLATEAU,
@@ -46,14 +45,14 @@ from lab_orchestration.thermocycler import (
 def test_readings_return_on_extension(
     operations: list[str], expected: list[bool]
 ) -> None:
-    thermocycler = Thermocycler(("A1",), 42)
+    thermocycler = Thermocycler(("A1",), {"A1": 1.0}, 42)
     readings = [thermocycler.invoke(operation) is not None for operation in operations]
     assert readings == expected
 
 
 def test_midpoint_reading_centers_on_half_plateau_plus_offset() -> None:
-    thermocycler = Thermocycler(("A1",), 42)
-    for _ in range(CURVE_MIDPOINT_CYCLE):
+    thermocycler = Thermocycler(("A1",), {"A1": 1.0}, 42)
+    for _ in range(30):
         thermocycler.invoke("denaturation")
         reading = thermocycler.invoke("extension")
     assert reading is not None
@@ -63,10 +62,10 @@ def test_midpoint_reading_centers_on_half_plateau_plus_offset() -> None:
 
 
 def test_readings_increase_with_cycle_number() -> None:
-    thermocycler = Thermocycler(("A1",), 42)
+    thermocycler = Thermocycler(("A1",), {"A1": 1.0}, 42)
     readings = []
-    midpoint_index = CURVE_MIDPOINT_CYCLE - 1  # cycle n is at index n-1
-    for _ in range(CURVE_MIDPOINT_CYCLE + 5):
+    midpoint_index = 30 - 1  # cycle n is at index n-1
+    for _ in range(30 + 5):
         thermocycler.invoke("denaturation")
         data = thermocycler.invoke("extension")
         if data is not None:
@@ -79,35 +78,42 @@ def test_readings_increase_with_cycle_number() -> None:
 
 
 def test_unrecognised_operation_raises_error() -> None:
-    thermocycler = Thermocycler(("A1",), 42)
+    thermocycler = Thermocycler(("A1",), {"A1": 1.0}, 42)
     with pytest.raises(ValueError, match="acquire"):
         thermocycler.invoke("acquire")
 
 
 def test_substring_of_recognised_operation_raises_error() -> None:
-    thermocycler = Thermocycler(("A1",), 42)
+    thermocycler = Thermocycler(("A1",), {"A1": 1.0}, 42)
     with pytest.raises(ValueError, match="nat"):
         thermocycler.invoke("nat")
 
 
 def test_extension_at_cycle_0_raises_error() -> None:
-    thermocycler = Thermocycler(("A1",), 42)
+    thermocycler = Thermocycler(("A1",), {"A1": 1.0}, 42)
     with pytest.raises(RuntimeError, match="before any denaturation"):
         thermocycler.invoke("extension")
 
 
-def test_multiple_wells_return_multiple_keys_and_a_distinct_value_per_well() -> None:
-    thermocycler = Thermocycler(("A1", "A2", "A3"), 42)
-    thermocycler.invoke("denaturation")
-    reading = thermocycler.invoke("extension")
+def test_well_read_in_quantity_order() -> None:
+    thermocycler = Thermocycler(
+        ("A1", "A2", "A3"), {"A1": 250.0, "A2": 12.0, "A3": 1.0}, 42
+    )
+    for _ in range(20):
+        thermocycler.invoke("denaturation")
+        reading = thermocycler.invoke("extension")
     assert reading is not None
     assert set(reading.keys()) == {"A1", "A2", "A3"}
-    assert len(set(reading.values())) == 3
+    assert reading["A1"] > reading["A2"] > reading["A3"]
 
 
 def test_same_seed_returns_identical_readings() -> None:
-    thermocycler_a = Thermocycler(("A1", "A2", "A3"), 42)
-    thermocycler_b = Thermocycler(("A1", "A2", "A3"), 42)
+    thermocycler_a = Thermocycler(
+        ("A1", "A2", "A3"), {"A1": 1.0, "A2": 1.0, "A3": 1.0}, 42
+    )
+    thermocycler_b = Thermocycler(
+        ("A1", "A2", "A3"), {"A1": 1.0, "A2": 1.0, "A3": 1.0}, 42
+    )
     thermocycler_a.invoke("denaturation")
     thermocycler_b.invoke("denaturation")
     reading_a = thermocycler_a.invoke("extension")
@@ -116,8 +122,12 @@ def test_same_seed_returns_identical_readings() -> None:
 
 
 def test_different_seed_returns_different_readings() -> None:
-    thermocycler_a = Thermocycler(("A1", "A2", "A3"), 42)
-    thermocycler_b = Thermocycler(("A1", "A2", "A3"), 43)
+    thermocycler_a = Thermocycler(
+        ("A1", "A2", "A3"), {"A1": 1.0, "A2": 1.0, "A3": 1.0}, 42
+    )
+    thermocycler_b = Thermocycler(
+        ("A1", "A2", "A3"), {"A1": 1.0, "A2": 1.0, "A3": 1.0}, 43
+    )
     thermocycler_a.invoke("denaturation")
     thermocycler_b.invoke("denaturation")
     reading_a = thermocycler_a.invoke("extension")
@@ -126,7 +136,9 @@ def test_different_seed_returns_different_readings() -> None:
 
 
 def test_residuals_match_noise_sd() -> None:
-    thermocycler = Thermocycler(tuple(f"A{i}" for i in range(1000)), 42)
+    thermocycler = Thermocycler(
+        tuple(f"A{i}" for i in range(1000)), {f"A{i}": 1.0 for i in range(1000)}, 42
+    )
     thermocycler.invoke("denaturation")
     readings = thermocycler.invoke("extension")
     assert readings is not None

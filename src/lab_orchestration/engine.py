@@ -43,12 +43,13 @@ class Event:
 
 @dataclass
 class Outcome:
-    """A program completion outcome, holding events, terminal state, reason for stopping and seed."""
+    """A program completion outcome, holding events, terminal state, reason for stopping, seed and run context."""
 
     events: list[Event]
     terminal_state: Literal["completed", "failed"]
     reason: str | None
     seed: int
+    run_context: object
 
 
 class StepFailed(Exception):
@@ -109,7 +110,10 @@ def run_program(program: Program, instruments: Mapping[str, Instrument]) -> list
 
 
 def run_and_report_outcome(
-    program: Program, instruments: Mapping[str, Instrument], seed: int
+    program: Program,
+    instruments: Mapping[str, Instrument],
+    seed: int,
+    run_context: object,
 ) -> Outcome:
     """Run the program and report outcome catching any failure.
 
@@ -121,6 +125,6 @@ def run_and_report_outcome(
 
     try:
         events = run_program(program, instruments)
-        return Outcome(events, "completed", None, seed)
+        return Outcome(events, "completed", None, seed, run_context)
     except StepFailed as exc:
-        return Outcome(exc.events, "failed", str(exc), seed)
+        return Outcome(exc.events, "failed", str(exc), seed, run_context)

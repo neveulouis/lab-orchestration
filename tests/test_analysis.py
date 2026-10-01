@@ -1,7 +1,15 @@
 import pytest
 
-from lab_orchestration.analysis import cq, readings, subtract_baseline
-from lab_orchestration.engine import Event
+from lab_orchestration.analysis import (
+    StandardCurve,
+    analyze_run,
+    cq,
+    fit_standard_curve,
+    quantify,
+    readings,
+    subtract_baseline,
+)
+from lab_orchestration.engine import Event, Outcome
 
 # A noiseless, offset-free logistic curve.
 CURVE = [
@@ -74,3 +82,67 @@ def test_baseline_gets_subtracted() -> None:
     values = [2.0, 4.0, 10.0, 20.0]
     baseline_cycles = 2
     assert subtract_baseline(values, baseline_cycles) == [-1.0, 1.0, 7.0, 17.0]
+
+
+def test_fit_recovers_known_line() -> None:
+    standards = [(1000.0, 20.04), (100.0, 23.36), (10.0, 26.68)]
+    curve = fit_standard_curve(standards)
+    assert curve.slope == pytest.approx(-3.32)
+    assert curve.intercept == pytest.approx(30.0)
+    assert curve.r_squared == pytest.approx(1.0)
+
+
+def test_quantify_returns_correct_value() -> None:
+    curve = StandardCurve(-3.32, 30.0, 1)
+    assert quantify(23.36, curve) == pytest.approx(100)
+
+
+@pytest.mark.parametrize(
+    ("quantity", "message"),
+    [
+        (None, "X1 declares no quantity"),
+        (1000.0, "X1 never crossed the threshold"),
+    ],
+)
+def test_unusable_standard_raises_naming_the_well(
+    quantity: float | None, message: str
+) -> None:
+    outcome = Outcome(
+        events=[Event("toaster", "toast", 10, {"X1": 0.0})],
+        terminal_state="completed",
+        reason=None,
+        seed=0,
+        run_context={"X1": {"role": "standard", "quantity": quantity}},
+    )
+    with pytest.raises(ValueError, match=message):
+        analyze_run(outcome, threshold=0.1, baseline_cycles=1)
+
+
+@pytest.mark.parametrize(
+    ("unknown_reading", "flag"),
+    [
+        (20.0, "above"),
+        (0.5, "below"),
+        (0.05, None),
+    ],
+)
+def test_unknown_outside_standards_is_flagged_with_direction(
+    unknown_reading: float, flag: str | None
+) -> None:
+    # Cq = 1 + 0.1 / second reading
+    outcome = Outcome(
+        events=[
+            Event("toaster", "toast", 0, {"X1": 0.0, "X2": 0.0, "X3": 0.0}),
+            Event("toaster", "toast", 1, {"X1": 1, "X2": 10, "X3": unknown_reading}),
+        ],
+        terminal_state="completed",
+        reason=None,
+        seed=0,
+        run_context={
+            "X1": {"role": "standard", "quantity": 10.0},
+            "X2": {"role": "standard", "quantity": 1000.0},
+            "X3": {"role": "unknown", "quantity": None},
+        },
+    )
+    results = analyze_run(outcome, threshold=0.1, baseline_cycles=1)
+    assert results["X3"].out_of_range == flag

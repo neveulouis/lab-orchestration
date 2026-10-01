@@ -163,6 +163,7 @@ def test_failing_step_keeps_the_events_that_completed() -> None:
                 "completed",
                 None,
                 42,
+                {"toast_slot_1": {"role": "sandwich", "quantity": 25.0}},
             ),
             id="success",
         ),
@@ -179,6 +180,7 @@ def test_failing_step_keeps_the_events_that_completed() -> None:
                 "failed",
                 "Instrument broke, too many break cycles",
                 42,
+                {"toast_slot_1": {"role": "sandwich", "quantity": 25.0}},
             ),
             id="failure",
         ),
@@ -186,7 +188,12 @@ def test_failing_step_keeps_the_events_that_completed() -> None:
 )
 def test_program_reports_outcome(program: Program, expected: Outcome) -> None:
     instruments = {"computing_instrument": ComputingInstrument(6)}
-    outcome = run_and_report_outcome(program, instruments, 42)
+    outcome = run_and_report_outcome(
+        program,
+        instruments,
+        42,
+        {"toast_slot_1": {"role": "sandwich", "quantity": 25.0}},
+    )
     assert outcome == expected
 
 
@@ -215,7 +222,12 @@ def test_each_step_reaches_the_instrument_it_names() -> None:
 def test_unsupplied_instrument_fails_the_run() -> None:
     instruments = {"computing_instrument": ComputingInstrument()}
     program: Program = [Step("toaster", "heat", 10)]
-    outcome = run_and_report_outcome(program, instruments, 42)
+    outcome = run_and_report_outcome(
+        program,
+        instruments,
+        42,
+        {"toast_slot_1": {"role": "sandwich", "quantity": 25.0}},
+    )
     assert outcome.terminal_state == "failed"
     assert outcome.reason is not None
     assert "toaster" in outcome.reason
