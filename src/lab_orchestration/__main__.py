@@ -17,13 +17,15 @@ from lab_orchestration.thermocycler import Thermocycler
 
 THRESHOLD = 0.1
 BASELINE_CYCLES = 5
-UNKNOWN_QUANTITY = 250
+UNKNOWN_QUANTITIES = {"U1": 2500, "U2": 400, "U3": 12, "U4": 0.3}
 
 
 def main() -> None:
     wells = tuple(RUN_CONTEXT)
     quantities = {
-        well: info["quantity"] if info["quantity"] is not None else UNKNOWN_QUANTITY
+        well: info["quantity"]
+        if info["quantity"] is not None
+        else UNKNOWN_QUANTITIES[info["sample"]]
         for well, info in RUN_CONTEXT.items()
     }
     instruments: Mapping[str, Instrument] = {

@@ -144,3 +144,9 @@ def test_residuals_match_noise_sd() -> None:
     assert readings is not None
     spread = statistics.stdev(readings.values())
     assert spread == pytest.approx(CURVE_NOISE_SD, rel=0.1)
+
+
+def test_zero_quantity_stays_at_baseline() -> None:
+    thermocycler = Thermocycler(("A1",), {"A1": 0.0}, 42)
+    for cycle in range(1, 41):
+        assert thermocycler._signal(cycle, 0.0) == CURVE_OFFSET

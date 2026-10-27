@@ -26,6 +26,9 @@ class Thermocycler:
 
     def _signal(self, cycle: int, quantity: float) -> float:
 
+        if quantity == 0:
+            return CURVE_OFFSET
+
         return CURVE_OFFSET + (
             CURVE_PLATEAU
             / (

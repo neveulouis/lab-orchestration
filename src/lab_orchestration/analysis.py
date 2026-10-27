@@ -24,7 +24,7 @@ class StandardCurve:
 class WellResult:
     """One well's result (cq and quantity) with its role and an out of range flag."""
 
-    role: Literal["standard", "unknown"]
+    role: Literal["standard", "NTC", "unknown"]
     cq: float | None
     quantity: float | None
     out_of_range: Literal["above", "below"] | None
