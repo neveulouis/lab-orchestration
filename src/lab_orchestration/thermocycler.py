@@ -6,7 +6,7 @@ from collections.abc import Mapping
 import numpy as np
 
 CURVE_PLATEAU = 1
-CYCLES_PER_10X_DILUTION = 3.32  # log2(10): a 10x dilution delays by 3.32 cyclesassuming perfect doubling each cycle (100% efficiency).
+CYCLES_PER_10X_DILUTION = 3.32  # log2(10): a 10x dilution delays by 3.32 cycles assuming perfect doubling each cycle (100% efficiency).
 LOWEST_CONCENTRATION_CYCLE = 30
 CURVE_STEEPNESS = 0.5
 CURVE_OFFSET = 0.05

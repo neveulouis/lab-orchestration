@@ -19,3 +19,12 @@ def test_commands_is_not_empty_after_invoking() -> None:
     liquid_handler = LiquidHandler(("A1",))
     liquid_handler.invoke("distribute_master_mix")
     assert liquid_handler.protocol.commands()
+
+
+def test_vendor_failure_raises_runtime_error() -> None:
+    liquid_handler = LiquidHandler(
+        tuple(f"{row}{col}" for row in "ABCDEFGH" for col in range(1, 13))
+    )
+    liquid_handler.invoke("distribute_master_mix")
+    with pytest.raises(RuntimeError, match="add_sample"):
+        liquid_handler.invoke("add_sample")

@@ -51,22 +51,30 @@ class LiquidHandler:
     def invoke(self, operation: str) -> Mapping[str, float] | None:
 
         if operation == "distribute_master_mix":
-            self.pipette.transfer(
-                volume=MASTER_MIX_VOLUME_UL,
-                source=self.reservoir["A1"],
-                dest=[self.plate[well] for well in self.wells],
-                new_tip="once",
-            )
+            try:
+                self.pipette.transfer(
+                    volume=MASTER_MIX_VOLUME_UL,
+                    source=self.reservoir["A1"],
+                    dest=[self.plate[well] for well in self.wells],
+                    new_tip="once",
+                )
+            except Exception as exc:
+                msg = f"{operation} failed: {exc}"
+                raise RuntimeError(msg) from exc
             return None
 
         if operation == "add_sample":
-            self.pipette.transfer(
-                volume=SAMPLE_VOLUME_UL,
-                source=self.reservoir["A2"],
-                dest=[self.plate[well] for well in self.wells],
-                new_tip="always",
-                mix_after=(MIXING_REPETITIONS, MIXING_VOLUME_UL),
-            )
+            try:
+                self.pipette.transfer(
+                    volume=SAMPLE_VOLUME_UL,
+                    source=self.reservoir["A2"],
+                    dest=[self.plate[well] for well in self.wells],
+                    new_tip="always",
+                    mix_after=(MIXING_REPETITIONS, MIXING_VOLUME_UL),
+                )
+            except Exception as exc:
+                msg = f"{operation} failed: {exc}"
+                raise RuntimeError(msg) from exc
             return None
 
         msg = f"unknown operation: {operation!r}"
