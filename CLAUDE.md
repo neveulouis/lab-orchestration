@@ -10,9 +10,10 @@ code in this repository.
    workflow-agnostically, it does not know what a thermocycler is.
 2. **qPCR reference workflow: defined on top of the engine.** Supplies thermal
    program and fluorescence acquisition at each extension step.
-3. **Opentrons sample-prep module: bounded.** Plate/reagent layout and
-   master-mix distribution, against the real Opentrons Python API via
-   `opentrons_simulate`. **Not** a full extraction protocol.
+3. **Opentrons sample-prep module: bounded.** Plate/reagent layout, master-mix
+   preparation and distribution, and moving the prepared plate off the deck,
+   against the real Opentrons Python API via `opentrons_simulate`. Not a full
+   extraction protocol, and never detection.
 4. **Data-analysis tail.** Curves → baseline subtraction → threshold/Cq →
    standard curve → quantification. Melt curve optional.
 
@@ -135,6 +136,9 @@ disagreement.
   instrument mapping and dispatches per step. A step naming an instrument that
   was not supplied fails the run.
   ([ADR 0007](docs/decisions/0007-a-run-drives-several-instruments-and-each-step-names-its-own.md))
+- **qPCR detection happens off the Opentrons deck. The `Thermocycler` is outside
+  Opentrons.** It takes no deck position and imports nothing from `opentrons`.
+  ([ADR 0009](docs/decisions/0009-qpcr-detection-happens-off-the-opentrons-deck.md))
 
 ## Working agreement
 
