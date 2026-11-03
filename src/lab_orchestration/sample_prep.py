@@ -12,6 +12,7 @@ TOTAL_REACTION_VOLUME_UL = 20
 SAMPLE_VOLUME_UL = 2
 SAMPLE_MIXING_VOLUME_UL = 10
 SAMPLE_MIXING_REPETITIONS = 10
+SAMPLE_NUCLEASE_FREE_WATER_TUBE_POSITION = "D6"
 MASTER_MIX_VOLUME_UL = TOTAL_REACTION_VOLUME_UL - SAMPLE_VOLUME_UL
 
 # Pipette and dead volume: the extra reactions cover what is lost in the
@@ -19,7 +20,7 @@ MASTER_MIX_VOLUME_UL = TOTAL_REACTION_VOLUME_UL - SAMPLE_VOLUME_UL
 EXTRA_REACTIONS = 5
 
 # The smallest batch at which polymerase (0.25 uL per reaction) clears the
-# Flex 1-channel pipette's 5 uL minimum. The simulator accepts smaller
+# Flex 1-channel 1000 pipette's 5 uL minimum. The simulator accepts smaller
 # volumes silently, so this floor is the only guard.
 MINIMUM_REACTIONS = 20
 
@@ -84,36 +85,54 @@ def master_mix_reactions(well_count: int) -> int:
 
 
 class LiquidHandler:
-    """An Opentrons Flex liquid handler that prepares and distributes master mix and adds sample to a list of wells."""
+    """An Opentrons Flex liquid handler that prepares and distributes master mix and adds each well's sample from its own tube.
 
-    def __init__(self, wells: tuple[str, ...]) -> None:
+    Sample tubes are assigned in the sample rack's order: standards first,
+    highest quantity first, then the other samples in the order they appear.
+    D6 holds water. Raises ValueError if the samples outnumber the free tubes.
+    """
+
+    def __init__(
+        self, samples: Mapping[str, str], standards: Mapping[str, float]
+    ) -> None:
+
+        self.samples = samples
+        self.standards = standards
+
         # The vendor logs two warnings while building a context: no
         # robot_settings.json and no belt calibration. Both are permanent on a
         # machine with no Flex attached, so they say nothing a run needs to
         # hear. Quiet only for construction.
-        self.wells = wells
         vendor_log = logging.getLogger("opentrons")
         previous_level = vendor_log.level
         vendor_log.setLevel(logging.ERROR)
+
         try:
             self.protocol = opentrons.simulate.get_protocol_api(
                 API_LEVEL, robot_type=ROBOT_TYPE
             )
-            tiprack = self.protocol.load_labware(
-                "opentrons_flex_96_tiprack_200ul", location="D3"
+            tiprack_200 = self.protocol.load_labware(
+                "opentrons_flex_96_filtertiprack_200ul", location="D3"
             )
-            self.pipette = self.protocol.load_instrument(
-                "flex_1channel_1000", mount="left", tip_racks=[tiprack]
+            self.pipette_1000 = self.protocol.load_instrument(
+                "flex_1channel_1000", mount="left", tip_racks=[tiprack_200]
+            )
+            tiprack_50 = self.protocol.load_labware(
+                "opentrons_flex_96_filtertiprack_50ul", location="C3"
+            )
+            self.pipette_50 = self.protocol.load_instrument(
+                "flex_1channel_50", mount="right", tip_racks=[tiprack_50]
             )
             self.plate = self.protocol.load_labware(
                 load_name="corning_96_wellplate_360ul_flat", location="D2"
             )
-            self.reservoir = self.protocol.load_labware(
-                load_name="usascientific_12_reservoir_22ml", location="D1"
-            )
             self.reagent_rack = self.protocol.load_labware(
                 load_name="opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap",
                 location="C1",
+            )
+            self.sample_rack = self.protocol.load_labware(
+                load_name="opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap",
+                location="C2",
             )
             self.protocol.load_trash_bin(location="A3")
         finally:
@@ -121,13 +140,30 @@ class LiquidHandler:
             # rest of the process.
             vendor_log.setLevel(previous_level)
 
+        names = sorted(
+            self.standards, key=lambda name: self.standards[name], reverse=True
+        ) + [
+            unique_name
+            for unique_name in dict.fromkeys(self.samples.values())
+            if unique_name not in self.standards
+        ]
+        free_tubes = [
+            tube
+            for tube in self.sample_rack.wells()
+            if tube.well_name != SAMPLE_NUCLEASE_FREE_WATER_TUBE_POSITION
+        ]
+        if len(names) > len(free_tubes):
+            msg = f"{len(names)} samples but only {len(free_tubes)} free tubes in the sample rack"
+            raise ValueError(msg)
+        self.sample_tubes = dict(zip(names, free_tubes, strict=False))
+
     def invoke(self, operation: str) -> Mapping[str, float] | None:
 
         if operation == "prepare_master_mix":
-            total_reactions = master_mix_reactions(len(self.wells))
+            total_reactions = master_mix_reactions(len(self.samples))
             try:
                 for position, volume in MASTER_MIX_RECIPE:
-                    self.pipette.transfer(
+                    self.pipette_1000.transfer(
                         volume=volume * total_reactions,
                         source=self.reagent_rack[position],
                         dest=self.reagent_rack[MIXING_TUBE_POSITION],
@@ -137,13 +173,13 @@ class LiquidHandler:
                             MASTER_MIX_RINSING_VOLUME_UL,
                         ),
                     )
-                self.pipette.pick_up_tip()
-                self.pipette.mix(
+                self.pipette_1000.pick_up_tip()
+                self.pipette_1000.mix(
                     MASTER_MIX_FINAL_MIX_REPETITIONS,
                     MASTER_MIX_FINAL_MIX_VOLUME_UL,
                     self.reagent_rack[MIXING_TUBE_POSITION],
                 )
-                self.pipette.drop_tip()
+                self.pipette_1000.drop_tip()
             except Exception as exc:
                 msg = f"{operation} failed: {exc}"
                 raise RuntimeError(msg) from exc
@@ -151,10 +187,11 @@ class LiquidHandler:
 
         if operation == "distribute_master_mix":
             try:
-                self.pipette.transfer(
+                self.pipette_50.configure_for_volume(MASTER_MIX_VOLUME_UL)
+                self.pipette_50.transfer(
                     volume=MASTER_MIX_VOLUME_UL,
                     source=self.reagent_rack[MIXING_TUBE_POSITION],
-                    dest=[self.plate[well] for well in self.wells],
+                    dest=[self.plate[well] for well in self.samples],
                     new_tip="once",
                 )
             except Exception as exc:
@@ -164,13 +201,15 @@ class LiquidHandler:
 
         if operation == "add_sample":
             try:
-                self.pipette.transfer(
-                    volume=SAMPLE_VOLUME_UL,
-                    source=self.reservoir["A2"],
-                    dest=[self.plate[well] for well in self.wells],
-                    new_tip="always",
-                    mix_after=(SAMPLE_MIXING_REPETITIONS, SAMPLE_MIXING_VOLUME_UL),
-                )
+                self.pipette_50.configure_for_volume(SAMPLE_VOLUME_UL)
+                for well, sample in self.samples.items():
+                    self.pipette_50.transfer(
+                        volume=SAMPLE_VOLUME_UL,
+                        source=self.sample_tubes[sample],
+                        dest=self.plate[well],
+                        new_tip="always",
+                        mix_after=(SAMPLE_MIXING_REPETITIONS, SAMPLE_MIXING_VOLUME_UL),
+                    )
             except Exception as exc:
                 msg = f"{operation} failed: {exc}"
                 raise RuntimeError(msg) from exc

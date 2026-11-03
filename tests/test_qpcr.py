@@ -14,7 +14,9 @@ def test_qpcr_program_runs_to_completion_using_both_instruments() -> None:
         "thermocycler": Thermocycler(
             ("A1", "A2", "A3"), {"A1": 100.0, "A2": 10.0, "A3": 1.0}, 42
         ),
-        "liquid_handler": LiquidHandler(("A1", "A2", "A3")),
+        "liquid_handler": LiquidHandler(
+            {"A1": "S1", "A2": "S2", "A3": "S3"}, {"S1": 100.0, "S2": 10.0, "S3": 1.0}
+        ),
     }
     outcome = run_and_report_outcome(
         QPCR_PROGRAM,

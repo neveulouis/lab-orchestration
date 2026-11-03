@@ -28,9 +28,15 @@ def main() -> None:
         else UNKNOWN_QUANTITIES[info["sample"]]
         for well, info in RUN_CONTEXT.items()
     }
+    samples = {well: info["sample"] for well, info in RUN_CONTEXT.items()}
+    standards = {
+        info["sample"]: info["quantity"]
+        for info in RUN_CONTEXT.values()
+        if info["role"] == "standard" and info["quantity"] is not None
+    }
     instruments: Mapping[str, Instrument] = {
         "thermocycler": Thermocycler(wells, quantities, SEED),
-        "liquid_handler": LiquidHandler(wells),
+        "liquid_handler": LiquidHandler(samples, standards),
     }
     path = Path("run.json")
 
