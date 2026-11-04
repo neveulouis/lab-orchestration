@@ -11,9 +11,10 @@ code in this repository.
 2. **qPCR reference workflow: defined on top of the engine.** Supplies thermal
    program and fluorescence acquisition at each extension step.
 3. **Opentrons sample-prep module: bounded.** Plate/reagent layout, master-mix
-   preparation and distribution, and moving the prepared plate off the deck,
-   against the real Opentrons Python API via `opentrons_simulate`. Not a full
-   extraction protocol, and never detection.
+   preparation and distribution, sample loading, the standard dilution series,
+   and moving the prepared plate off the deck, against the real Opentrons Python
+   API via `opentrons_simulate`. Not a full extraction protocol, and never
+   detection.
 4. **Data-analysis tail.** Curves → baseline subtraction → threshold/Cq →
    standard curve → quantification. Melt curve optional.
 
