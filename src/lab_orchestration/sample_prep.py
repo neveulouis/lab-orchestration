@@ -71,6 +71,15 @@ MASTER_MIX_RINSING_REPETITIONS = 3
 MASTER_MIX_FINAL_MIX_VOLUME_UL = 150
 MASTER_MIX_FINAL_MIX_REPETITIONS = 10
 
+# Each lower standard's tube is made up to this total: the transfer is the
+# total divided by the fold, the rest is water. At 100 uL the transfer stays
+# at or above the 50 pipette's 5 uL minimum up to a 1:20 step.
+TOTAL_DILUTION_VOLUME_UL = 100
+# Dead volume left in a 2 mL tube.
+DILUTION_MARGIN_VOLUME_UL = 5
+DILUTION_MIXING_VOLUME_UL = 40
+DILUTION_MIXING_REPETITIONS = 10
+
 
 def master_mix_reactions(well_count: int) -> int:
     """Return how many reactions of master mix to prepare for a plate.
@@ -85,11 +94,14 @@ def master_mix_reactions(well_count: int) -> int:
 
 
 class LiquidHandler:
-    """An Opentrons Flex liquid handler that prepares and distributes master mix and adds each well's sample from its own tube.
+    """An Opentrons Flex liquid handler that prepares master mix and a standard series and loads the plate.
 
     Sample tubes are assigned in the sample rack's order: standards first,
     highest quantity first, then the other samples in the order they appear.
-    D6 holds water. Raises ValueError if the samples outnumber the free tubes.
+    D6 holds water. The operator places the top standard; each lower one is
+    diluted from the one above it. Raises ValueError if the samples outnumber
+    the free tubes, if a dilution volume falls below the pipette's minimum,
+    or if a standard's tube cannot cover its replicates and onward transfer.
     """
 
     def __init__(
@@ -140,9 +152,11 @@ class LiquidHandler:
             # rest of the process.
             vendor_log.setLevel(previous_level)
 
-        names = sorted(
+        self.standard_series = sorted(
             self.standards, key=lambda name: self.standards[name], reverse=True
-        ) + [
+        )
+
+        names = self.standard_series + [
             unique_name
             for unique_name in dict.fromkeys(self.samples.values())
             if unique_name not in self.standards
@@ -156,6 +170,55 @@ class LiquidHandler:
             msg = f"{len(names)} samples but only {len(free_tubes)} free tubes in the sample rack"
             raise ValueError(msg)
         self.sample_tubes = dict(zip(names, free_tubes, strict=False))
+
+        # receiving standard -> (source standard, transfer uL, water uL)
+        self.dilution_plan = {}
+        for source, receiving in zip(
+            self.standard_series, self.standard_series[1:], strict=False
+        ):
+            fold = self.standards[source] / self.standards[receiving]
+            transfer_volume_ul = TOTAL_DILUTION_VOLUME_UL / fold
+            water_volume_ul = TOTAL_DILUTION_VOLUME_UL - transfer_volume_ul
+
+            if transfer_volume_ul < self.pipette_50.min_volume:
+                msg = (
+                    f"diluting {source} into {receiving} needs {transfer_volume_ul:.2f} uL "
+                    f"of {source}, below the pipette's {self.pipette_50.min_volume} uL minimum"
+                )
+                raise ValueError(msg)
+            if water_volume_ul < self.pipette_50.min_volume:
+                msg = (
+                    f"diluting {source} into {receiving} needs {water_volume_ul:.2f} uL "
+                    f"of water, below the pipette's {self.pipette_50.min_volume} uL minimum"
+                )
+                raise ValueError(msg)
+
+            self.dilution_plan[receiving] = (
+                source,
+                transfer_volume_ul,
+                water_volume_ul,
+            )
+
+        # Each tube the robot makes must cover its replicate wells, the margin, and
+        # what it gives the next standard, as the source of the next pair. The bottom
+        # standard gives nothing onward. The top standard is the operator's stock and
+        # is not checked here.
+        onward_transfers = {
+            source: transfer_volume_ul
+            for source, transfer_volume_ul, _ in self.dilution_plan.values()
+        }
+        for receiving in self.dilution_plan:
+            onward_ul = onward_transfers.get(receiving, 0)
+            replicates = list(self.samples.values()).count(receiving)
+            needed_ul = (
+                replicates * SAMPLE_VOLUME_UL + onward_ul + DILUTION_MARGIN_VOLUME_UL
+            )
+            if needed_ul > TOTAL_DILUTION_VOLUME_UL:
+                msg = (
+                    f"{receiving} needs {needed_ul:.2f} uL for its replicates, margin "
+                    f"and onward transfer, more than the {TOTAL_DILUTION_VOLUME_UL} uL in its tube"
+                )
+                raise ValueError(msg)
 
     def invoke(self, operation: str) -> Mapping[str, float] | None:
 
@@ -194,6 +257,44 @@ class LiquidHandler:
                     dest=[self.plate[well] for well in self.samples],
                     new_tip="once",
                 )
+            except Exception as exc:
+                msg = f"{operation} failed: {exc}"
+                raise RuntimeError(msg) from exc
+            return None
+
+        if operation == "prepare_standards":
+            # A single standard leaves nothing to dilute, and the vendor's transfer
+            # raises on an empty destination list.
+            if not self.dilution_plan:
+                return None
+            try:
+                self.pipette_50.configure_for_volume(DILUTION_MIXING_VOLUME_UL)
+                self.pipette_50.transfer(
+                    volume=[
+                        water_volume_ul
+                        for _, _, water_volume_ul in self.dilution_plan.values()
+                    ],
+                    source=self.sample_rack[SAMPLE_NUCLEASE_FREE_WATER_TUBE_POSITION],
+                    dest=[
+                        self.sample_tubes[receiving] for receiving in self.dilution_plan
+                    ],
+                    new_tip="once",
+                )
+                for receiving, (
+                    source,
+                    transfer_volume_ul,
+                    _,
+                ) in self.dilution_plan.items():
+                    self.pipette_50.transfer(
+                        volume=transfer_volume_ul,
+                        source=self.sample_tubes[source],
+                        dest=self.sample_tubes[receiving],
+                        new_tip="always",
+                        mix_after=(
+                            DILUTION_MIXING_REPETITIONS,
+                            DILUTION_MIXING_VOLUME_UL,
+                        ),
+                    )
             except Exception as exc:
                 msg = f"{operation} failed: {exc}"
                 raise RuntimeError(msg) from exc

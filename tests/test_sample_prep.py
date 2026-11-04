@@ -10,7 +10,8 @@ def test_unrecognised_operation_raises_error() -> None:
 
 
 @pytest.mark.parametrize(
-    "operation", ["prepare_master_mix", "distribute_master_mix", "add_sample"]
+    "operation",
+    ["prepare_master_mix", "prepare_standards", "distribute_master_mix", "add_sample"],
 )
 def test_valid_operation_returns_none(operation: str) -> None:
     liquid_handler = LiquidHandler({"A1": "S1"}, {"S1": 10.0})
@@ -44,3 +45,23 @@ def test_more_samples_than_tubes_raises() -> None:
     samples = {well: f"S{i}" for i, well in enumerate(wells)}
     with pytest.raises(ValueError, match="24"):
         LiquidHandler(samples, {})
+
+
+@pytest.mark.parametrize(
+    ("standards", "match"),
+    [({"S1": 100.0, "S2": 1.0}, "of S1"), ({"S1": 10.0, "S2": 10.0}, "of water")],
+)
+def test_dilution_volume_below_pipette_minimum_raises(
+    standards: dict[str, float], match: str
+) -> None:
+    with pytest.raises(ValueError, match=match):
+        LiquidHandler({"A1": "S1", "A2": "S2"}, standards)
+
+
+def test_standard_tube_overflow_raises() -> None:
+    samples = {"A1": "S1", "D1": "S3"} | {
+        f"{row}{col}": "S2" for row in "BC" for col in range(1, 13)
+    }
+    standards = {"S1": 4.0, "S2": 2, "S3": 1}
+    with pytest.raises(ValueError, match="S2 needs"):
+        LiquidHandler(samples, standards)
