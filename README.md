@@ -52,6 +52,7 @@ uv run -m lab_orchestration
 Output:
 
 ```
+Loading sheet produced at loading_sheet.csv
 Run completed, record produced at run.json
 Well  Role      Cq     Quantity
 A1    standard  12.30  10000.00
@@ -96,7 +97,9 @@ H2    NTC       —      —
 H3    NTC       —      —
 ```
 
-The record is written to `run.json` in the working directory.
+Before the run, a loading sheet is written to `loading_sheet.csv`: each tube’s
+rack, position, content and volume to load, with robot-filled tubes left blank.
+The record is written to `run.json`. Both go in the working directory.
 
 ## Documentation
 

@@ -19,6 +19,9 @@ MASTER_MIX_VOLUME_UL = TOTAL_REACTION_VOLUME_UL - SAMPLE_VOLUME_UL
 # mix tube and on tips.
 EXTRA_REACTIONS = 5
 
+# Dead volume left in a 2 mL tube.
+TUBE_DEAD_VOLUME_UL = 5
+
 # The smallest batch at which polymerase (0.25 uL per reaction) clears the
 # Flex 1-channel 1000 pipette's 5 uL minimum. The simulator accepts smaller
 # volumes silently, so this floor is the only guard.
@@ -51,17 +54,21 @@ NUCLEASE_FREE_WATER_VOLUME_UL = MASTER_MIX_VOLUME_UL - (
 NUCLEASE_FREE_WATER_TUBE_POSITION = "C1"
 MIXING_TUBE_POSITION = "D1"
 
-# Master mix recipe as (tube, per-reaction volume), in pipetting order.
-# Water goes first, polymerase goes last.
+# Master mix recipe as (reagent name, tube, per-reaction volume), in
+# pipetting order. Water goes first, polymerase goes last.
 MASTER_MIX_RECIPE = (
-    (NUCLEASE_FREE_WATER_TUBE_POSITION, NUCLEASE_FREE_WATER_VOLUME_UL),
-    (REACTION_BUFFER_TUBE_POSITION, REACTION_BUFFER_VOLUME_UL),
-    (DNTP_TUBE_POSITION, DNTP_VOLUME_UL),
-    (MGCL2_TUBE_POSITION, MGCL2_VOLUME_UL),
-    (FORWARD_PRIMER_TUBE_POSITION, FORWARD_PRIMER_VOLUME_UL),
-    (REVERSE_PRIMER_TUBE_POSITION, REVERSE_PRIMER_VOLUME_UL),
-    (FLUORESCENT_DYE_TUBE_POSITION, FLUORESCENT_DYE_VOLUME_UL),
-    (POLYMERASE_TUBE_POSITION, POLYMERASE_VOLUME_UL),
+    (
+        "nuclease free water",
+        NUCLEASE_FREE_WATER_TUBE_POSITION,
+        NUCLEASE_FREE_WATER_VOLUME_UL,
+    ),
+    ("reaction buffer", REACTION_BUFFER_TUBE_POSITION, REACTION_BUFFER_VOLUME_UL),
+    ("dNTPs", DNTP_TUBE_POSITION, DNTP_VOLUME_UL),
+    ("MgCl2", MGCL2_TUBE_POSITION, MGCL2_VOLUME_UL),
+    ("forward primer", FORWARD_PRIMER_TUBE_POSITION, FORWARD_PRIMER_VOLUME_UL),
+    ("reverse primer", REVERSE_PRIMER_TUBE_POSITION, REVERSE_PRIMER_VOLUME_UL),
+    ("fluorescent dye", FLUORESCENT_DYE_TUBE_POSITION, FLUORESCENT_DYE_VOLUME_UL),
+    ("polymerase", POLYMERASE_TUBE_POSITION, POLYMERASE_VOLUME_UL),
 )
 
 # Rinse each addition out of the tip.
@@ -75,8 +82,6 @@ MASTER_MIX_FINAL_MIX_REPETITIONS = 10
 # total divided by the fold, the rest is water. At 100 uL the transfer stays
 # at or above the 50 pipette's 5 uL minimum up to a 1:20 step.
 TOTAL_DILUTION_VOLUME_UL = 100
-# Dead volume left in a 2 mL tube.
-DILUTION_MARGIN_VOLUME_UL = 5
 DILUTION_MIXING_VOLUME_UL = 40
 DILUTION_MIXING_REPETITIONS = 10
 
@@ -203,16 +208,14 @@ class LiquidHandler:
         # what it gives the next standard, as the source of the next pair. The bottom
         # standard gives nothing onward. The top standard is the operator's stock and
         # is not checked here.
-        onward_transfers = {
+        self.onward_transfers = {
             source: transfer_volume_ul
             for source, transfer_volume_ul, _ in self.dilution_plan.values()
         }
         for receiving in self.dilution_plan:
-            onward_ul = onward_transfers.get(receiving, 0)
+            onward_ul = self.onward_transfers.get(receiving, 0)
             replicates = list(self.samples.values()).count(receiving)
-            needed_ul = (
-                replicates * SAMPLE_VOLUME_UL + onward_ul + DILUTION_MARGIN_VOLUME_UL
-            )
+            needed_ul = replicates * SAMPLE_VOLUME_UL + onward_ul + TUBE_DEAD_VOLUME_UL
             if needed_ul > TOTAL_DILUTION_VOLUME_UL:
                 msg = (
                     f"{receiving} needs {needed_ul:.2f} uL for its replicates, margin "
@@ -220,12 +223,49 @@ class LiquidHandler:
                 )
                 raise ValueError(msg)
 
+    def loading_sheet(self) -> list[tuple[str, str, str, float | None]]:
+
+        loading_list = []
+        for name, tube in self.sample_tubes.items():
+            if name in self.dilution_plan:
+                volume = None
+            else:
+                replicates = list(self.samples.values()).count(name)
+                volume = (
+                    SAMPLE_VOLUME_UL * replicates
+                    + self.onward_transfers.get(name, 0)
+                    + TUBE_DEAD_VOLUME_UL
+                )
+            loading_list.append(("sample", tube.well_name, name, volume))
+
+        water_ul = (
+            sum(
+                water_volume_ul for _, _, water_volume_ul in self.dilution_plan.values()
+            )
+            + TUBE_DEAD_VOLUME_UL
+        )
+
+        loading_list.append(
+            ("sample", SAMPLE_NUCLEASE_FREE_WATER_TUBE_POSITION, "water", water_ul)
+        )
+
+        for reagent_name, reagent_position, reagent_volume in MASTER_MIX_RECIPE:
+            volume = (
+                reagent_volume * master_mix_reactions(len(self.samples))
+                + TUBE_DEAD_VOLUME_UL
+            )
+            loading_list.append(("reagent", reagent_position, reagent_name, volume))
+
+        loading_list.append(("reagent", MIXING_TUBE_POSITION, "master mix", None))
+
+        return loading_list
+
     def invoke(self, operation: str) -> Mapping[str, float] | None:
 
         if operation == "prepare_master_mix":
             total_reactions = master_mix_reactions(len(self.samples))
             try:
-                for position, volume in MASTER_MIX_RECIPE:
+                for _, position, volume in MASTER_MIX_RECIPE:
                     self.pipette_1000.transfer(
                         volume=volume * total_reactions,
                         source=self.reagent_rack[position],

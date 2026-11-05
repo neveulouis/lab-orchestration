@@ -1,5 +1,6 @@
 """Command-line entry point: runs a program, writes the run record and computes analyses."""
 
+import csv
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -34,11 +35,22 @@ def main() -> None:
         for info in RUN_CONTEXT.values()
         if info["role"] == "standard" and info["quantity"] is not None
     }
+    thermocycler = Thermocycler(wells, quantities, SEED)
+    liquid_handler = LiquidHandler(samples, standards)
     instruments: Mapping[str, Instrument] = {
-        "thermocycler": Thermocycler(wells, quantities, SEED),
-        "liquid_handler": LiquidHandler(samples, standards),
+        "thermocycler": thermocycler,
+        "liquid_handler": liquid_handler,
     }
+    sheet_path = Path("loading_sheet.csv")
     path = Path("run.json")
+
+    with sheet_path.open("w", newline="", encoding="utf-8") as sheet_file:
+        writer = csv.writer(sheet_file)
+        writer.writerow(["rack", "tube", "content", "volume_ul"])
+        for rack, tube, content, volume in liquid_handler.loading_sheet():
+            volume_cell = "" if volume is None else f"{volume:.2f}"
+            writer.writerow([rack, tube, content, volume_cell])
+    print(f"Loading sheet produced at {sheet_path}")  # noqa: T201
 
     outcome = run_and_report_outcome(QPCR_PROGRAM, instruments, SEED, RUN_CONTEXT)
     write_record(outcome, path)

@@ -118,8 +118,9 @@ Thumbs.db
 # Project-management state (not part of the codebase)
 project-state.md
 
-# Run-record json
+# Demo outputs
 /run.json
+/loading_sheet.csv
 
 # Claude Code local configuration
 .claude/

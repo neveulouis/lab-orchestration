@@ -14,6 +14,7 @@ def test_demo_prints_a_row_per_well(
     out = capsys.readouterr().out
     # These lines are quoted in the README. Change one, change both.
     expected = [
+        "Loading sheet produced at loading_sheet.csv",
         "Run completed, record produced at run.json",
         "Well  Role      Cq     Quantity",
         "A1    standard  12.30  10000.00",
