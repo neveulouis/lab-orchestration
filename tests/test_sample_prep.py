@@ -65,3 +65,35 @@ def test_standard_tube_overflow_raises() -> None:
     standards = {"S1": 4.0, "S2": 2, "S3": 1}
     with pytest.raises(ValueError, match="S2 needs"):
         LiquidHandler(samples, standards)
+
+
+def test_loading_sheet_lists_every_tube_and_volume() -> None:
+    samples = {
+        "A1": "S1",
+        "A2": "S1",
+        "A3": "U1",
+        "A4": "U1",
+        "A5": "U1",
+        "B1": "S2",
+        "B2": "S2",
+        "C1": "N1",
+        "C2": "N1",
+    }
+    standards = {"S1": 100.0, "S2": 10.0}
+    liquid_handler = LiquidHandler(samples, standards)
+    assert liquid_handler.loading_sheet() == [
+        ("sample", "A1", "S1", 19.0),
+        ("sample", "B1", "S2", None),
+        ("sample", "C1", "U1", 11.0),
+        ("sample", "D1", "N1", 9.0),
+        ("sample", "D6", "water", 95.0),
+        ("reagent", "C1", "nuclease free water", 236.0),
+        ("reagent", "A1", "reaction buffer", 45.0),
+        ("reagent", "A2", "dNTPs", 13.0),
+        ("reagent", "A3", "MgCl2", 29.0),
+        ("reagent", "A4", "forward primer", 21.0),
+        ("reagent", "A5", "reverse primer", 21.0),
+        ("reagent", "A6", "fluorescent dye", 25.0),
+        ("reagent", "B1", "polymerase", 10.0),
+        ("reagent", "D1", "master mix", None),
+    ]
