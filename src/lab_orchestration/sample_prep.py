@@ -141,7 +141,7 @@ class LiquidHandler:
                 "flex_1channel_50", mount="right", tip_racks=[tiprack_50]
             )
             self.plate = self.protocol.load_labware(
-                load_name="corning_96_wellplate_360ul_flat", location="D2"
+                load_name="opentrons_96_wellplate_200ul_pcr_full_skirt", location="D2"
             )
             self.reagent_rack = self.protocol.load_labware(
                 load_name="opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap",
