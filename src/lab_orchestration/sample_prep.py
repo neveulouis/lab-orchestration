@@ -135,19 +135,19 @@ class LiquidHandler:
                 API_LEVEL, robot_type=ROBOT_TYPE
             )
             tiprack_200 = self.protocol.load_labware(
-                "opentrons_flex_96_filtertiprack_200ul", location="D3"
+                "opentrons_flex_96_filtertiprack_200ul", location="D1"
             )
             self.pipette_1000 = self.protocol.load_instrument(
                 "flex_1channel_1000", mount="left", tip_racks=[tiprack_200]
             )
             tiprack_50 = self.protocol.load_labware(
-                "opentrons_flex_96_filtertiprack_50ul", location="C3"
+                "opentrons_flex_96_filtertiprack_50ul", location="D2"
             )
             self.pipette_50 = self.protocol.load_instrument(
                 "flex_1channel_50", mount="right", tip_racks=[tiprack_50]
             )
             self.plate = self.protocol.load_labware(
-                load_name="opentrons_96_wellplate_200ul_pcr_full_skirt", location="D2"
+                load_name="opentrons_96_wellplate_200ul_pcr_full_skirt", location="B3"
             )
             self.reagent_rack = self.protocol.load_labware(
                 load_name="opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap",
@@ -155,7 +155,7 @@ class LiquidHandler:
             )
             self.sample_rack = self.protocol.load_labware(
                 load_name="opentrons_24_tuberack_eppendorf_2ml_safelock_snapcap",
-                location="C2",
+                location="A2",
             )
             self.protocol.load_trash_bin(location="A3")
         finally:
