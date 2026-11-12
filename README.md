@@ -115,8 +115,9 @@ The record is written to `run.json`. Both go in the working directory.
 
 Deferred decisions:
 
-- **No plate handoff.** The liquid handler fills a plate and the thermocycler
-  reads one. Nothing moves it between them yet.
+- **No automated plate handoff.** The liquid handler has the operator move the
+  prepared plate off its deck to the thermocycler by hand, and nothing checks
+  that the plate arrived.
 - **No command line.** The demo accepts no arguments and writes to only one
   location.
 - **No per-sample analysis.** Replicates are reported well by well, with no mean

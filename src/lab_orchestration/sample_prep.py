@@ -6,6 +6,7 @@ from collections.abc import Set as AbstractSet
 from typing import Literal
 
 import opentrons.simulate
+from opentrons.protocol_api import OFF_DECK
 
 ROBOT_TYPE: Literal["Flex"] = "Flex"
 API_LEVEL = "2.29"
@@ -100,7 +101,7 @@ def master_mix_reactions(well_count: int) -> int:
 
 
 class LiquidHandler:
-    """An Opentrons Flex liquid handler that prepares master mix and a standard series and loads the plate.
+    """An Opentrons Flex liquid handler that prepares master mix and a standard series, loads the plate and has it moved off the deck.
 
     Sample tubes are assigned in the sample rack's order: standards first,
     highest quantity first, then the other samples in the order they appear.
@@ -378,6 +379,16 @@ class LiquidHandler:
                         new_tip="always",
                         mix_after=(SAMPLE_MIXING_REPETITIONS, SAMPLE_MIXING_VOLUME_UL),
                     )
+            except Exception as exc:
+                msg = f"{operation} failed: {exc}"
+                raise RuntimeError(msg) from exc
+            return None
+
+        if operation == "move_plate_off_deck":
+            try:
+                self.protocol.move_labware(
+                    self.plate, new_location=OFF_DECK, use_gripper=False
+                )
             except Exception as exc:
                 msg = f"{operation} failed: {exc}"
                 raise RuntimeError(msg) from exc

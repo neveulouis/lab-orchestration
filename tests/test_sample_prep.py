@@ -1,4 +1,5 @@
 import pytest
+from opentrons.protocol_api import OFF_DECK
 
 from lab_orchestration.sample_prep import LiquidHandler, master_mix_reactions
 
@@ -26,7 +27,13 @@ def pipetted_volumes(commands: list[str]) -> dict[tuple[str, str], float]:
 
 @pytest.mark.parametrize(
     "operation",
-    ["prepare_master_mix", "prepare_standards", "distribute_master_mix", "add_sample"],
+    [
+        "prepare_master_mix",
+        "prepare_standards",
+        "distribute_master_mix",
+        "add_sample",
+        "move_plate_off_deck",
+    ],
 )
 def test_valid_operation_returns_none(operation: str) -> None:
     liquid_handler = LiquidHandler({"A1": "S1"}, {"S1": 10.0}, set())
@@ -154,3 +161,9 @@ def test_protocol_pipettes_expected_volumes() -> None:
     }
 
     assert actual == pytest.approx(expected)
+
+
+def test_move_plate_off_deck_takes_the_plate_off_the_deck() -> None:
+    liquid_handler = LiquidHandler({"A1": "S1"}, {"S1": 10.0}, set())
+    liquid_handler.invoke("move_plate_off_deck")
+    assert liquid_handler.plate.parent == OFF_DECK
