@@ -9,6 +9,21 @@ def test_unrecognised_operation_raises_error() -> None:
         liquid_handler.invoke("acquire")
 
 
+def pipetted_volumes(commands: list[str]) -> dict[tuple[str, str], float]:
+    volumes: dict[tuple[str, str], float] = {}
+    source = ""
+    for command in commands:
+        if command.startswith("Aspirating"):
+            source = command.split(" from ")[1].split(" at ")[0]
+        if command.startswith("Dispensing"):
+            destination = command.split(" into ")[1].split(" at ")[0]
+            if destination != source:
+                key = (source, destination)
+                volume = float(command.split(" ")[1])
+                volumes[key] = volumes.get(key, 0) + volume
+    return volumes
+
+
 @pytest.mark.parametrize(
     "operation",
     ["prepare_master_mix", "prepare_standards", "distribute_master_mix", "add_sample"],
@@ -99,3 +114,43 @@ def test_loading_sheet_lists_every_tube_and_volume() -> None:
         ("reagent", "B1", "polymerase", 10.0),
         ("reagent", "D1", "master mix", None),
     ]
+
+
+def test_protocol_pipettes_expected_volumes() -> None:
+    samples = {"A1": "S1", "A2": "S2", "A3": "N1"}
+    standards = {"S1": 100.0, "S2": 10.0}
+    ntc = {"N1"}
+    liquid_handler = LiquidHandler(samples, standards, ntc)
+    liquid_handler.invoke("prepare_master_mix")
+    liquid_handler.invoke("prepare_standards")
+    liquid_handler.invoke("distribute_master_mix")
+    liquid_handler.invoke("add_sample")
+    actual = pipetted_volumes(liquid_handler.protocol.commands())
+
+    reagents = liquid_handler.reagent_rack
+    tubes = liquid_handler.sample_rack
+    plate = liquid_handler.plate
+    mix = str(reagents["D1"])
+    water = str(tubes["D6"])
+
+    expected = {
+        (str(reagents["C1"]), mix): 231,
+        (str(reagents["A1"]), mix): 40,
+        (str(reagents["A2"]), mix): 8,
+        (str(reagents["A3"]), mix): 24,
+        (str(reagents["A4"]), mix): 16,
+        (str(reagents["A5"]), mix): 16,
+        (str(reagents["A6"]), mix): 20,
+        (str(reagents["B1"]), mix): 5,
+        (water, str(tubes["C1"])): 7,
+        (water, str(tubes["B1"])): 90,
+        (str(tubes["A1"]), str(tubes["B1"])): 10,
+        (mix, str(plate["A1"])): 18,
+        (mix, str(plate["A2"])): 18,
+        (mix, str(plate["A3"])): 18,
+        (str(tubes["A1"]), str(plate["A1"])): 2,
+        (str(tubes["B1"]), str(plate["A2"])): 2,
+        (str(tubes["C1"]), str(plate["A3"])): 2,
+    }
+
+    assert actual == pytest.approx(expected)
