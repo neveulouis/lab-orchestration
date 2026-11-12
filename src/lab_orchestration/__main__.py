@@ -35,8 +35,9 @@ def main() -> None:
         for info in RUN_CONTEXT.values()
         if info["role"] == "standard" and info["quantity"] is not None
     }
+    ntcs = {info["sample"] for info in RUN_CONTEXT.values() if info["role"] == "NTC"}
     thermocycler = Thermocycler(wells, quantities, SEED)
-    liquid_handler = LiquidHandler(samples, standards)
+    liquid_handler = LiquidHandler(samples, standards, ntcs)
     instruments: Mapping[str, Instrument] = {
         "thermocycler": thermocycler,
         "liquid_handler": liquid_handler,

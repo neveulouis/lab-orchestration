@@ -2,6 +2,7 @@
 
 import logging
 from collections.abc import Mapping
+from collections.abc import Set as AbstractSet
 from typing import Literal
 
 import opentrons.simulate
@@ -104,17 +105,22 @@ class LiquidHandler:
     Sample tubes are assigned in the sample rack's order: standards first,
     highest quantity first, then the other samples in the order they appear.
     D6 holds water. The operator places the top standard; each lower one is
-    diluted from the one above it. Raises ValueError if the samples outnumber
-    the free tubes, if a dilution volume falls below the pipette's minimum,
-    or if a standard's tube cannot cover its replicates and onward transfer.
+    diluted from the one above it, and each NTC's tube is filled with water
+    from D6. Raises ValueError if the samples outnumber the free tubes, if a
+    dilution volume falls below the pipette's minimum, or if a standard's
+    tube cannot cover its replicates and onward transfer.
     """
 
     def __init__(
-        self, samples: Mapping[str, str], standards: Mapping[str, float]
+        self,
+        samples: Mapping[str, str],
+        standards: Mapping[str, float],
+        ntcs: AbstractSet[str],
     ) -> None:
 
         self.samples = samples
         self.standards = standards
+        self.ntcs = ntcs
 
         # The vendor logs two warnings while building a context: no
         # robot_settings.json and no belt calibration. Both are permanent on a
@@ -204,6 +210,14 @@ class LiquidHandler:
                 water_volume_ul,
             )
 
+        # NTC -> water uL for its replicates plus dead volume; always above the pipette minimum.
+        self.ntc_water = {}
+        for name in self.sample_tubes:
+            if name in self.ntcs:
+                replicates = list(self.samples.values()).count(name)
+                water_volume_ul = SAMPLE_VOLUME_UL * replicates + TUBE_DEAD_VOLUME_UL
+                self.ntc_water[name] = water_volume_ul
+
         # Each tube the robot makes must cover its replicate wells, the margin, and
         # what it gives the next standard, as the source of the next pair. The bottom
         # standard gives nothing onward. The top standard is the operator's stock and
@@ -227,7 +241,7 @@ class LiquidHandler:
 
         loading_list = []
         for name, tube in self.sample_tubes.items():
-            if name in self.dilution_plan:
+            if name in self.dilution_plan or name in self.ntcs:
                 volume = None
             else:
                 replicates = list(self.samples.values()).count(name)
@@ -242,6 +256,7 @@ class LiquidHandler:
             sum(
                 water_volume_ul for _, _, water_volume_ul in self.dilution_plan.values()
             )
+            + sum(water_volume_ul for water_volume_ul in self.ntc_water.values())
             + TUBE_DEAD_VOLUME_UL
         )
 
@@ -303,38 +318,50 @@ class LiquidHandler:
             return None
 
         if operation == "prepare_standards":
-            # A single standard leaves nothing to dilute, and the vendor's transfer
-            # raises on an empty destination list.
-            if not self.dilution_plan:
-                return None
             try:
                 self.pipette_50.configure_for_volume(DILUTION_MIXING_VOLUME_UL)
-                self.pipette_50.transfer(
-                    volume=[
-                        water_volume_ul
-                        for _, _, water_volume_ul in self.dilution_plan.values()
-                    ],
-                    source=self.sample_rack[SAMPLE_NUCLEASE_FREE_WATER_TUBE_POSITION],
-                    dest=[
-                        self.sample_tubes[receiving] for receiving in self.dilution_plan
-                    ],
-                    new_tip="once",
-                )
-                for receiving, (
-                    source,
-                    transfer_volume_ul,
-                    _,
-                ) in self.dilution_plan.items():
+
+                if self.ntc_water:
                     self.pipette_50.transfer(
-                        volume=transfer_volume_ul,
-                        source=self.sample_tubes[source],
-                        dest=self.sample_tubes[receiving],
-                        new_tip="always",
-                        mix_after=(
-                            DILUTION_MIXING_REPETITIONS,
-                            DILUTION_MIXING_VOLUME_UL,
-                        ),
+                        volume=list(self.ntc_water.values()),
+                        source=self.sample_rack[
+                            SAMPLE_NUCLEASE_FREE_WATER_TUBE_POSITION
+                        ],
+                        dest=[self.sample_tubes[ntc] for ntc in self.ntc_water],
+                        new_tip="once",
                     )
+
+                if self.dilution_plan:
+                    self.pipette_50.transfer(
+                        volume=[
+                            water_volume_ul
+                            for _, _, water_volume_ul in self.dilution_plan.values()
+                        ],
+                        source=self.sample_rack[
+                            SAMPLE_NUCLEASE_FREE_WATER_TUBE_POSITION
+                        ],
+                        dest=[
+                            self.sample_tubes[receiving]
+                            for receiving in self.dilution_plan
+                        ],
+                        new_tip="once",
+                    )
+                    for receiving, (
+                        source,
+                        transfer_volume_ul,
+                        _,
+                    ) in self.dilution_plan.items():
+                        self.pipette_50.transfer(
+                            volume=transfer_volume_ul,
+                            source=self.sample_tubes[source],
+                            dest=self.sample_tubes[receiving],
+                            new_tip="always",
+                            mix_after=(
+                                DILUTION_MIXING_REPETITIONS,
+                                DILUTION_MIXING_VOLUME_UL,
+                            ),
+                        )
+
             except Exception as exc:
                 msg = f"{operation} failed: {exc}"
                 raise RuntimeError(msg) from exc
